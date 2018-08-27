@@ -2,6 +2,7 @@
 
 ```
 pip3 install crycompare
+# pycoingecko and coinmetrics must be cloned in the root folder of the project
 git clone https://github.com/man-c/pycoingecko.git
 git clone https://github.com/man-c/coinmetrics.git
 ```
