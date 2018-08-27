@@ -12,32 +12,31 @@ cm = CoinMetricsAPI()
 coins_ranked = cg.get_coins(order='market_cap_desc')
 coins_ranked = coins_ranked[0:10]
 
-print(len(coins_ranked))
+print('Features for top ' + str(len(coins_ranked)) + ' coins (ranked by market cap)')
 coin_symbols_ranked = []
 for coin in coins_ranked:
     coin_symbols_ranked.append(coin['symbol'])
-    print(coin['name'])
-    print(coin['developer_data'])
-    print(coin['community_data'])
-    print(coin['public_interest_stats'])
-    print(coin['last_updated'])
+    #print(coin['name'])
+    #print(coin['developer_data'])
+    #print(coin['community_data'])
+    #print(coin['public_interest_stats'])
+    #print(coin['last_updated'])
 
-coins_social_stats = {}
-coins_blockexplorer_stats = {}
-#for coin in coin_list:
-#    #coins_social_stats[coin['symbol']] = coin_social_stats(coin['symbol'])
-#    coins_blockexplorer_stats[coin['symbol']] = coin_blockexplorer_stats(coin['symbol'])
 
-## COIN METRICS
-##coins_blockexplorer_stats = coin_blockexplorer_stats(coin_symbols_ranked)
-#cm_supported_assets = cm.get_supported_assets()
-#
-#for c in coins_ranked:
-#    if c['symbol'] in cm_supported_assets:
-#        print(c['symbol'] + ' in CM.')
-#    else:
-#        print('! ' + c['symbol'] + ' not in CM.')
-#
+# COIN METRICS
+cm_supported_assets = cm.get_supported_assets()
+cm_coins_features = {}
+# get all features for selected coins (supported by coinmetrics)
+for c in coins_ranked:
+    if c['symbol'] in cm_supported_assets:
+        print(c['symbol'] + ' in CoinMerics')
+        cm_coins_features.update(cm.get_all_data_types_for_assets(c['symbol']))
+    else:
+        print('! ' + c['symbol'] + ' not in CoinMerics')
+# get all features for all assets supported by coinmetrics
+#cm_coin_features = cm.get_all_data_types_for_all_assets()
+
+
 ## not supported by cryptocompare
 #cm_supported_assets.remove('cennz')
 #cm_supported_assets.remove('ethos')

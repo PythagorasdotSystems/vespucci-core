@@ -1,4 +1,4 @@
-#from fta_coin_explorer import *
+# not FTA (but example of other info we could use from cryptocompare)
 from fta_coin import coin_full_snapshot
 
 def coin_info(coin):

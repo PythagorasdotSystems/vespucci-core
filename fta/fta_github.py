@@ -15,9 +15,6 @@ class FtaGithub:
         return url_path_list
     
     
-    #def __
-    
-    
     #o = urlparse('https://github.com/litecoin-project/litecoin')
     #l = list(filter(None, o.path.rsplit('/')))
     
