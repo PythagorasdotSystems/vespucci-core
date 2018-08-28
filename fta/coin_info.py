@@ -16,6 +16,7 @@ def coin_info(coin):
 
 
 if __name__ == "__main__":
+    print('Coin info example')
     info = coin_info('BTC')
     print(info)
 
