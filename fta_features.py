@@ -54,7 +54,7 @@ def fta_features(num_coins = 10):
     return coins_block_features, coins_social_features
 
 def db_coinmetrics(coin_features):
-
+    pass
 
 if __name__ == "__main__":
     while(1):
