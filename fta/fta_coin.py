@@ -12,6 +12,8 @@ def coin_full_snapshot(coin_names):
 
     response = {}
     for coin in coin_names:
+        if coin.upper() == 'MIOTA':
+            coin = 'iot'
         if coin.upper() in L['Data'].keys():
             response[coin] = p.coin_snapshot_id(L['Data'][coin.upper()]['Id'])['Data']
         else:
@@ -60,6 +62,8 @@ def social_features(coin_names):
 
     response = {}
     for coin in coin_names:
+        if coin.upper() == 'MIOTA':
+            coin = 'iot'
         if coin.upper() in L['Data'].keys():
             #print(coin)
             response[coin] = s.social_stats(L['Data'][coin.upper()]['Id'])
@@ -68,3 +72,6 @@ def social_features(coin_names):
         #print(response[coin]['CodeRepository']['List'][-1]['url'])
     return response
 
+if __name__ == "__main__":
+    print('FTA coin snapshot example')
+    r = coin_full_snapshot('btc')
