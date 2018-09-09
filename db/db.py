@@ -13,7 +13,7 @@ class DB:
 
 
     def connect(self):
-        self.cnxn = pyodbc.connect('DRIVER='+driver+';SERVER='+server+';PORT=1443;DATABASE='+database+';UID='+usrname+';PWD='+ password)
+        self.cnxn = pyodbc.connect('DRIVER=' + self.__driver + ';SERVER=' + self.__server + ';PORT=1443;DATABASE=' + self.__database + ';UID=' + self.__usrname + ';PWD=' + self.__password)
 
     def disconnect(self):
         self.cnxn.close() 
