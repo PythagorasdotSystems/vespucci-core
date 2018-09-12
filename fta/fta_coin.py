@@ -35,7 +35,13 @@ def coin_features_from_snapshot(coins_full_snapshots):
         features['TotalCoinsMined'] = coins_full_snapshots[coin_snapshot]['General']['TotalCoinsMined']
         features['PreviousTotalCoinsMined'] = coins_full_snapshots[coin_snapshot]['General']['PreviousTotalCoinsMined']
         features['LastBlockExplorerUpdateTS'] = coins_full_snapshots[coin_snapshot]['General']['LastBlockExplorerUpdateTS']
+
+        features['BlockRewardReduction'] = features['BlockRewardReduction'].replace('%','')
+        if features['BlockRewardReduction'] == '-':
+            features['BlockRewardReduction'] = ''
+
         coins_features[coin_snapshot] = features
+
     return coins_features
 
 
