@@ -43,7 +43,7 @@ def fta_features(num_coins = 10):
     coins_ranked = cg.get_coins(order='market_cap_desc')
     coins_ranked = coins_ranked[0:num_coins]
 
-    print('Features for top ' + str(len(coins_ranked)) + ' coins (ranked by market cap)')
+    #print('Features for top ' + str(len(coins_ranked)) + ' coins (ranked by market cap)')
     logger.info('Features for top ' + str(len(coins_ranked)) + ' coins (ranked by market cap)')
     coin_symbols_ranked = []
     for coin in coins_ranked:
@@ -66,7 +66,7 @@ def fta_features(num_coins = 10):
                 #print(c['symbol'] + ' in CoinMerics')
                 cm_coins_features.update(cm.get_all_data_types_for_assets(c['symbol']))
             else:
-                print('! ' + c['symbol'] + ' not in CoinMerics')
+                #print('! ' + c['symbol'] + ' not in CoinMerics')
                 logger.info('! ' + c['symbol'] + ' not in CoinMerics')
         # get all features for all assets supported by coinmetrics
         #cm_coin_features = cm.get_all_data_types_for_all_assets()
@@ -82,6 +82,9 @@ def fta_features(num_coins = 10):
         coins_social_features = social_features(coin_symbols_ranked)
 
         # Databases
+        # update coin list from CoinGecko
+        coins_ranked = coinGecko_list_update(coins_ranked)
+
         db_coinmetrics(cm_coins_features)
         db_cryptocompare(coins_block_features)
         db_developer(coins_ranked)
@@ -98,7 +101,7 @@ def fta_features(num_coins = 10):
 
 
     return cm_coins_features, coins_block_features, coins_social_features
-1
+
 
 def coinGecko_list_update(coin_list):
     cg = CoinGeckoAPI()
@@ -124,8 +127,7 @@ def db_developer(coin_features, db = None):
         db = DB()
     db.connect()
 
-    coin_features = coinGecko_list_update(coin_features)
-
+    #coin_features = coinGecko_list_update(coin_features)
     for coin in coin_features:
         #print(coin['developer_data'])
         #print(coin['id'])
@@ -140,7 +142,10 @@ def db_developer(coin_features, db = None):
         Values.append(coin['symbol'])
 
         db_query += ', last_updated'
-        Values.append(datetime.datetime.strptime(coin['last_updated'],'%Y-%m-%dT%H:%M:%S.%fZ'))
+        if not isinstance(coin['last_updated'], datetime.datetime):
+            Values.append(datetime.datetime.strptime(coin['last_updated'],'%Y-%m-%dT%H:%M:%S.%fZ'))
+        else:
+            Values.append(coin['last_updated'])
 
         db_query += ',' + ','.join(list(map(( lambda x: '[' + x + ']'), (coin['developer_data'].keys()))))
         Values.extend(list(coin['developer_data'].values()))
@@ -163,7 +168,7 @@ def db_cryptocompare(coin_features, db = None):
     db.connect()
 
     for coin in coin_features:
-        print(coin_features[coin])
+        #print(coin_features[coin])
         Values = []
 
         db_query = 'INSERT INTO FtaCryptoCompare ('
@@ -172,15 +177,15 @@ def db_cryptocompare(coin_features, db = None):
         Values.append(coin)
 
         #db_query += ', LastBlockExplorerUpdateTS'
-        if not isinstance(coins_block_features[coin]['LastBlockExplorerUpdateTS'], datetime.datetime):
+        if not isinstance(coin_features[coin]['LastBlockExplorerUpdateTS'], datetime.datetime):
             coin_features[coin]['LastBlockExplorerUpdateTS'] = datetime.datetime.fromtimestamp(coin_features[coin]['LastBlockExplorerUpdateTS'])
 
-        db_query += ',' + ','.join(list(map(( lambda x: '[' + x + ']'), (coins_block_features[coin].keys()))))
-        Values.extend(list(coins_block_features[coin].values()))
+        db_query += ',' + ','.join(list(map(( lambda x: '[' + x + ']'), (coin_features[coin].keys()))))
+        Values.extend(list(coin_features[coin].values()))
 
         db_query += ') VALUES '
 
-        db_query += '(' + ','.join(['?' for x in coins_block_features[coin].keys()]) + ',? ' + ')'
+        db_query += '(' + ','.join(['?' for x in coin_features[coin].keys()]) + ',? ' + ')'
 
         #print(db_query)
         #print(Values)
@@ -240,13 +245,16 @@ def coinGeckoHistoricalDeveloper(coin_list, from_date):
     cg = CoinGeckoAPI()
 
     date = datetime.datetime.strptime(from_date, '%d-%m-%Y').date()
-    taday = datetime.date.today()
+    #taday = datetime.date.today()
 
     r = []
     while date!=datetime.date.today():
         print(date)
         for coin in coin_list:
-            r.append(cg.get_coin_history_by_id(coin['id'], date.strftime('%d-%m-%Y')))
+            responce = cg.get_coin_history_by_id(coin['id'], date.strftime('%d-%m-%Y'))
+            responce['last_updated'] = datetime.datetime.combine(date, datetime.datetime.min.time())
+            r.append(responce)
+            #r.append(cg.get_coin_history_by_id(coin['id'], date.strftime('%d-%m-%Y')))
 
         date = date + datetime.timedelta(days=1)
 
