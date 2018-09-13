@@ -81,10 +81,10 @@ def fta_features(num_coins = 10):
         coins_block_features = block_features(coin_symbols_ranked)
         coins_social_features = social_features(coin_symbols_ranked)
 
-        ## Databases
-        #db_coinmetrics(cm_coins_features)
-        #db_cryptocompare(coins_block_features)
-        #db_developer(coins_ranked)
+        # Databases
+        db_coinmetrics(cm_coins_features)
+        db_cryptocompare(coins_block_features)
+        db_developer(coins_ranked)
 
         # Sleep
         t=datetime.datetime.now()
@@ -232,6 +232,23 @@ def db_coinmetrics(coin_features, db = None):
             db.cnxn.commit()
 
     db.disconnect()
+
+    return r
+
+
+def coinGeckoHistoricalDeveloper(coin_list, from_date):
+    cg = CoinGeckoAPI()
+
+    date = datetime.datetime.strptime(from_date, '%d-%m-%Y').date()
+    taday = datetime.date.today()
+
+    r = []
+    while date!=datetime.date.today():
+        print(date)
+        for coin in coin_list:
+            r.append(cg.get_coin_history_by_id(coin['id'], date.strftime('%d-%m-%Y')))
+
+        date = date + datetime.timedelta(days=1)
 
     return r
 
