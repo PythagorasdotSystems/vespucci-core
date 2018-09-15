@@ -46,7 +46,6 @@ class ConfigFileParser:
     @database.setter
     def database(self, value):
         #TODO add checks
-        print('databse setterr!')
         self.__database = value
 
     @property
@@ -56,7 +55,6 @@ class ConfigFileParser:
     @twitter.setter
     def twitter(self, value):
         #TODO add checks
-        print('twitter checks')
         self.__twitter = value
 
 
