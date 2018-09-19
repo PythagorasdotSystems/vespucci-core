@@ -378,7 +378,9 @@ def sentiment_analysis_features(db = None):
 
     today = datetime.datetime.today()
     today = datetime.datetime(today.year, today.month, today.day)
-   
+
+    print('Tweets from ' + str(yesterday))
+    print('Tweets until ' + str(today))
     # check that everything is OK!
     if not (tweets[0][-1] > today and tweets[-1][-1]  < yesterday):
         print('Fetch more tweets!!')
@@ -526,10 +528,11 @@ def da_scoring_function(da_feats):
         score[coin] = 0
         if 'open_source' in da_feats[coin]:
             #score[coin] += da_feats[coin]['open_source'] * 50
-            if da_feats[coin]['open_source'] == -1:
-                score[coin] += -100
-            else:
-                score[coin] += 50
+            #if da_feats[coin]['open_source'] == -1:
+            #    score[coin] += -100
+            #else:
+            #    score[coin] += 50
+            score[coin] += (-100 if da_feats[coin]['open_source'] == -1 else 50)
         if 'commit_count_4_weeks' in da_feats[coin]:
             score[coin] += da_feats[coin]['commit_count_4_weeks'] * 12.5
         if 'issues_rate' in da_feats[coin]:
@@ -543,8 +546,13 @@ def da_scoring_function(da_feats):
 
 def scoring_function():
 
+    total_analysis = {}
+
     bea_feats = block_explorer_features()
     bea_scores = bea_scoring_function(bea_feats)
+
+    total_analysis['bea_feats'] = bea_feats
+    total_analysis['bea_scores'] = bea_scores
 
     #for coin in bea_scores:
     #    print(coin + ', ' + str(bea_scores[coin]))
@@ -552,11 +560,18 @@ def scoring_function():
     ea_feats = expert_analysis_features()
     ea_scores = ea_scoring_function(ea_feats)
 
+
+    total_analysis['ea_feats'] = ea_feats
+    total_analysis['ea_scores'] = ea_scores
+
     #for coin in ea_scores:
     #    print(coin + ', ' + str(ea_scores[coin]))
 
     sa_feats = sentiment_analysis_features()
     sa_scores = sa_scoring_function(sa_feats)
+
+    total_analysis['sa_feats'] = sa_feats
+    total_analysis['sa_scores'] = sa_scores
 
     #for coin in sa_scores:
     #    print(coin + ', ' + str(sa_scores[coin]))
@@ -564,7 +579,11 @@ def scoring_function():
     da_feats = developer_analysis_features()
     da_scores = da_scoring_function(da_feats)
 
+    total_analysis['da_feats'] = da_feats
+    total_analysis['da_scores'] = da_scores
+
     # look only for the ones we have block explorer feats
+    print('coin, bea, ea, sa, da')
     for coin in bea_scores:
         print(coin + ': ' + str(bea_scores[coin]) + ', ' + str(ea_scores[coin]) + ', ' + str(sa_scores[coin]) + ', ' + str(da_scores[coin]))
     
@@ -572,7 +591,7 @@ def scoring_function():
     for coin in bea_scores:
         total_score[coin] = 0.4 * ( 0.3 * bea_scores[coin] + 0.25 * ea_scores[coin] + 0.25 * da_scores[coin] ) + 0.2 * ( 1 * sa_scores[coin] )
     
-    return total_score
+    return total_score, total_analysis
 
 
 if __name__ == "__main__":
