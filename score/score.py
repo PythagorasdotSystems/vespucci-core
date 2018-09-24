@@ -1,266 +1,9 @@
-from pycoingecko.pycoingecko import CoinGeckoAPI
-from coinmetrics.coinmetrics import CoinMetricsAPI
-
-from fta.fta_coin import social_features
-from fta.fta_coin import block_features
-
-from db import DB
+import sys
+sys.path.append('..')
 import utils
 
-import logging
 import datetime
 import time
-
-
-def fta_features(num_coins = 10):
-
-    # LOGGER
-    #----------------------------------------------------
-    logger = logging.getLogger('fta_features_listener')
-    logger.setLevel(logging.DEBUG)
-
-    # file handler logs debug msg
-    fh = logging.FileHandler('fta.log')
-    fh.setLevel(logging.DEBUG)
-
-    formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
-    fh.setFormatter(formatter)
-
-    #smtp_handler = logging.handlers.SMTPHandler(
-    #        mailhost=("smtp.gmail.com", 465),
-    #        fromaddr="manolis@pythagoras.systems",
-    #        toaddrs="manolis@pythagoras.systems",
-    #        subject=u"AppName error!")
-
-    # add the handlers to logger
-    logger.addHandler(fh)
-    #logger.addHandler(smtp_handler)
-    #-----------------------------------------------------
-
-
-    cg = CoinGeckoAPI()
-    cm = CoinMetricsAPI()
-
-    # returns top 50 by default
-    coins_ranked = cg.get_coins(order='market_cap_desc')
-    coins_ranked = coins_ranked[0:num_coins]
-
-    #print('Features for top ' + str(len(coins_ranked)) + ' coins (ranked by market cap)')
-    logger.info('Features for top ' + str(len(coins_ranked)) + ' coins (ranked by market cap)')
-    coin_symbols_ranked = []
-    for coin in coins_ranked:
-        coin_symbols_ranked.append(coin['symbol'])
-        #print(coin['name'])
-        #print(coin['id'])
-        #print(coin['developer_data'])
-        ##print('\n')
-        ##print(coin['community_data'])
-        ##print(coin['public_interest_stats'])
-        #print(coin['last_updated'])
-
-    while(1):
-        # COIN METRICS
-        cm_supported_assets = cm.get_supported_assets()
-        cm_coins_features = {}
-        # get all features for selected coins (supported by coinmetrics)
-        for c in coins_ranked:
-            if c['symbol'] in cm_supported_assets:
-                #print(c['symbol'] + ' in CoinMerics')
-                cm_coins_features.update(cm.get_all_data_types_for_assets(c['symbol']))
-            else:
-                #print('! ' + c['symbol'] + ' not in CoinMerics')
-                logger.info('! ' + c['symbol'] + ' not in CoinMerics')
-        # get all features for all assets supported by coinmetrics
-        #cm_coin_features = cm.get_all_data_types_for_all_assets()
-
-        ## not supported by cryptocompare
-        #cm_supported_assets.remove('cennz')
-        #cm_supported_assets.remove('ethos')
-        #cm_supported_assets.remove('ven')
-        #coins_block_features = block_features(cm_supported_assets)
-        #coins_social_features = social_features(cm_supported_assets)
-
-        coins_block_features = block_features(coin_symbols_ranked)
-        coins_social_features = social_features(coin_symbols_ranked)
-
-        # Databases
-        # update coin list from CoinGecko
-        coins_ranked = coinGecko_list_update(coins_ranked)
-
-        db_coinmetrics(cm_coins_features)
-        db_cryptocompare(coins_block_features)
-        db_developer(coins_ranked)
-
-        # Sleep
-        t=datetime.datetime.now()
-        t0=datetime.datetime(t.year, t.month, t.day, 12)
-        t1=t0 + datetime.timedelta(days=1)
-
-        logger.info('Sleep until ' + str(t1) + ' (' + str((t1-t0).total_seconds()) + ' seconds)')
-        #logger.info('Sleep for ' + str((t1-t0).total_seconds()) + ' seconds!')
-
-        time.sleep((t1-t0).total_seconds())
-
-
-    return cm_coins_features, coins_block_features, coins_social_features
-
-
-def coinGecko_list_update(coin_list):
-    cg = CoinGeckoAPI()
-    response = []
-    for coin in coin_list:
-        #print(coin)
-        #print(coin['id'])
-        response.append(cg.get_coin_by_id(coin['id']))
-
-        #print(response[-1]['name'])
-        #print(response[-1]['id'])
-        #print(response[-1]['developer_data'])
-        ##print('\n')
-        ##print(coin['community_data'])
-        ##print(coin['public_interest_stats'])
-        #print(response[-1]['last_updated'])
-
-    return response
-
-
-def db_developer(coin_features, db = None):
-    if not db:
-        db = DB()
-    db.connect()
-
-    #coin_features = coinGecko_list_update(coin_features)
-    for coin in coin_features:
-        #print(coin['developer_data'])
-        #print(coin['id'])
-        ## last updated form '2018-09-12T14:51:38.396Z'
-        #print(datetime.datetime.strptime(coin['last_updated'],'%Y-%m-%dT%H:%M:%S.%fZ'))
-
-        Values = []
-
-        db_query = 'INSERT INTO FtaDeveloper ('
-
-        db_query += ' Symbol'
-        Values.append(coin['symbol'])
-
-        db_query += ', last_updated'
-        if not isinstance(coin['last_updated'], datetime.datetime):
-            Values.append(datetime.datetime.strptime(coin['last_updated'],'%Y-%m-%dT%H:%M:%S.%fZ'))
-        else:
-            Values.append(coin['last_updated'])
-
-        db_query += ',' + ','.join(list(map(( lambda x: '[' + x + ']'), (coin['developer_data'].keys()))))
-        Values.extend(list(coin['developer_data'].values()))
-
-        db_query += ') VALUES '
-
-        db_query += '(' + ','.join(['?' for x in coin['developer_data'].keys()]) + ',?,? ' + ')'
-
-        #print(db_query)
-        #print(Values)
-        db.cnxn.execute(db_query, tuple(Values))
-        db.cnxn.commit()
-
-    db.disconnect()
-
-
-def db_cryptocompare(coin_features, db = None):
-    if not db:
-        db = DB()
-    db.connect()
-
-    for coin in coin_features:
-        #print(coin_features[coin])
-        Values = []
-
-        db_query = 'INSERT INTO FtaCryptoCompare ('
-
-        db_query += ' Symbol'
-        Values.append(coin)
-
-        #db_query += ', LastBlockExplorerUpdateTS'
-        if not isinstance(coin_features[coin]['LastBlockExplorerUpdateTS'], datetime.datetime):
-            coin_features[coin]['LastBlockExplorerUpdateTS'] = datetime.datetime.fromtimestamp(coin_features[coin]['LastBlockExplorerUpdateTS'])
-
-        db_query += ',' + ','.join(list(map(( lambda x: '[' + x + ']'), (coin_features[coin].keys()))))
-        Values.extend(list(coin_features[coin].values()))
-
-        db_query += ') VALUES '
-
-        db_query += '(' + ','.join(['?' for x in coin_features[coin].keys()]) + ',? ' + ')'
-
-        #print(db_query)
-        #print(Values)
-        db.cnxn.execute(db_query, tuple(Values))
-        db.cnxn.commit()
-
-
-def db_coinmetrics(coin_features, db = None):
-    if not db:
-        db = DB()
-    db.connect()
-
-    r = {}
-    # fix Dic to format Dic[coin][timestamp][feature] instead of Dic[coin][feature][[timestamp,feature_value],[timestamp2, feature_value]]
-    for coin in coin_features:
-        r[coin] = {}
-        for feat in coin_features[coin]:
-            for feat_ts in coin_features[coin][feat]:
-                if feat_ts[0] not in r[coin].keys():
-                    r[coin][feat_ts[0]] = {}
-                r[coin][feat_ts[0]][feat] = feat_ts[1]
-        #print(coin)
-        #print(coin_features[coin])
-        #print(coin_features[coin].keys())
-
-    for coin in r:
-        for ts in r[coin]:
-            Values = []
-            db_query = 'INSERT INTO FtaCoinmetrics ('
-
-            db_query += ' Symbol'
-            Values.append(coin)
-
-            db_query += ', CM_Timestamp'
-            Values.append(datetime.datetime.fromtimestamp(ts))
-
-            #db_query += ',' + ','.join(r[coin][ts].keys())
-            db_query += ',' + ','.join(list(map(( lambda x: '[' + x + ']'), (r[coin][ts].keys()))))
-            Values.extend(list(r[coin][ts].values()))
-
-            db_query += ') VALUES '
-            #list(map(( lambda x: '[' + x + ']'), list(r[coin][ts].keys())))
-            db_query += '(' + ','.join(['?' for x in r[coin][ts].keys()]) + ',?,? ' + ')'
-
-
-            #print(db_query)
-            #print(Values)
-            db.cnxn.execute(db_query, tuple(Values))
-            db.cnxn.commit()
-
-    db.disconnect()
-
-    return r
-
-
-def coinGeckoHistoricalDeveloper(coin_list, from_date):
-    cg = CoinGeckoAPI()
-
-    date = datetime.datetime.strptime(from_date, '%d-%m-%Y').date()
-    #taday = datetime.date.today()
-
-    r = []
-    while date!=datetime.date.today():
-        print(date)
-        for coin in coin_list:
-            responce = cg.get_coin_history_by_id(coin['id'], date.strftime('%d-%m-%Y'))
-            responce['last_updated'] = datetime.datetime.combine(date, datetime.datetime.min.time())
-            r.append(responce)
-            #r.append(cg.get_coin_history_by_id(coin['id'], date.strftime('%d-%m-%Y')))
-
-        date = date + datetime.timedelta(days=1)
-
-    return r
 
 
 def max_from_list(l, pos = 0):
@@ -274,7 +17,9 @@ def divide_list_by_max(l, pos = 0):
 def find_description_position(description, feature_name):
     return [i for i,x in enumerate([d[0] for d in description]) if x == feature_name][0]
 
-def block_explorer_features(db = None):
+
+# Block Explorer Analysis features
+def bea_features(db = None):
     if not db:
         #db = DB()
         config = utils.tools.ConfigFileParser('/home/pythagorasdev/searchers/config.yml')
@@ -282,10 +27,12 @@ def block_explorer_features(db = None):
     db.connect()
     cursor = db.cnxn.cursor()
 
+    #cursor.execute('select * from FtaCoinMetrics where CM_Timestamp >= 10/9/2018  AND CM_Timestamp <  11/9/2018')
     cursor.execute('select * from FtaCoinMetrics where CM_Timestamp >=  DATEADD(DAY, -3, GETDATE()) AND CM_Timestamp <  DATEADD(DAY, -2, GETDATE())')
     t0 = cursor.fetchall()
     print(len(t0))
     cursor.execute('select * from FtaCoinMetrics where CM_Timestamp >=  DATEADD(DAY, -2, GETDATE()) AND CM_Timestamp <  DATEADD(DAY, -1, GETDATE())')
+    #cursor.execute('select * from FtaCoinMetrics where CM_Timestamp >= 9/9/2018  AND CM_Timestamp <  10/9/2018')
     t1 = cursor.fetchall()
     print(len(t1))
 
@@ -360,7 +107,8 @@ def block_explorer_features(db = None):
     return block_feats
 
 
-def sentiment_analysis_features(db = None):
+# Sentiment Analysis features
+def sa_features(db = None):
     if not db:
         #db = DB()
         config = utils.tools.ConfigFileParser('/home/pythagorasdev/searchers/config.yml')
@@ -406,9 +154,10 @@ def sentiment_analysis_features(db = None):
     return filtered_tweets
 
 
-def expert_analysis_features():
+# Expert Analysis features
+def ea_features():
     scores_expert = {}
-    with open('fta_expert_scores.txt', 'r') as f:
+    with open('/home/pythagorasdev/fta/fta_expert_scores.txt', 'r') as f:
         for line in f:
             line=line.strip().split(',')
             # normalize values from [1,10] to [0.1,1]
@@ -416,7 +165,8 @@ def expert_analysis_features():
     return scores_expert
 
 
-def developer_analysis_features(db = None):
+# Developer Analysis features
+def da_features(db = None):
     if not db:
         #db = DB()
         config = utils.tools.ConfigFileParser('/home/pythagorasdev/searchers/config.yml')
@@ -486,6 +236,44 @@ def developer_analysis_features(db = None):
     return da_feats
 
 
+# Technical Analysis (ta) features
+def ta_features(db = None):
+    if not db:
+        config = utils.tools.ConfigFileParser('/home/pythagorasdev/searchers/config.yml')
+        db=utils.DB(config.database)
+    db.connect()
+    cursor = db.cnxn.cursor()
+
+    # execute example
+    #cursor.execute('SELECT * FROM FtaDeveloper')
+    #rows = cursor.fetchall()
+
+
+    # after finishing everything disconnect from db
+    db.disconnect()
+    # and return if results in a dictionary; else write them to db
+    #return ta_feats
+
+
+# Technical Analysis (ta) scoring function
+def ta_scoring_function(ta_feats = None, db = None):
+    # ta_feats if results in dictionary or 
+    if not db:
+        config = utils.tools.ConfigFileParser('/home/pythagorasdev/searchers/config.yml')
+        db=utils.DB(config.database)
+    db.connect()
+    cursor = db.cnxn.cursor()
+
+    # dictionary with scores, format should be something like {'ltc': 50, 'btc': 75, 'eos': 85, etc.}
+    # you can check the functions bellow as examples
+    scores = {}
+
+    # after finishing everything disconnect from db
+    db.disconnect()
+    # return dictionay with scores
+    return scores
+
+
 # Block Explorer Analysis (bea) scoring function
 def bea_scoring_function(block_feats):
     score = {}
@@ -522,6 +310,7 @@ def ea_scoring_function(ea_feats):
     return score
 
 
+# Developer Analysis (da) scoring function
 def da_scoring_function(da_feats):
     score = {}
     for coin in da_feats:
@@ -548,7 +337,7 @@ def scoring_function():
 
     total_analysis = {}
 
-    bea_feats = block_explorer_features()
+    bea_feats = bea_features()
     bea_scores = bea_scoring_function(bea_feats)
 
     total_analysis['bea_feats'] = bea_feats
@@ -557,7 +346,7 @@ def scoring_function():
     #for coin in bea_scores:
     #    print(coin + ', ' + str(bea_scores[coin]))
 
-    ea_feats = expert_analysis_features()
+    ea_feats = ea_features()
     ea_scores = ea_scoring_function(ea_feats)
 
 
@@ -567,7 +356,7 @@ def scoring_function():
     #for coin in ea_scores:
     #    print(coin + ', ' + str(ea_scores[coin]))
 
-    sa_feats = sentiment_analysis_features()
+    sa_feats = sa_features()
     sa_scores = sa_scoring_function(sa_feats)
 
     total_analysis['sa_feats'] = sa_feats
@@ -576,7 +365,7 @@ def scoring_function():
     #for coin in sa_scores:
     #    print(coin + ', ' + str(sa_scores[coin]))
     
-    da_feats = developer_analysis_features()
+    da_feats = da_features()
     da_scores = da_scoring_function(da_feats)
 
     total_analysis['da_feats'] = da_feats
@@ -587,19 +376,13 @@ def scoring_function():
     for coin in bea_scores:
         print(coin + ': ' + str(bea_scores[coin]) + ', ' + str(ea_scores[coin]) + ', ' + str(sa_scores[coin]) + ', ' + str(da_scores[coin]))
     
-    total_score = {}
+    total_scores = {}
     for coin in bea_scores:
-        total_score[coin] = 0.4 * ( 0.3 * bea_scores[coin] + 0.1 * ea_scores[coin] + 0.25 * da_scores[coin] ) + 0.2 * ( 1 * sa_scores[coin] )
+        total_scores[coin] = 0.4 * ( 0.3 * bea_scores[coin] + 0.1 * ea_scores[coin] + 0.25 * da_scores[coin] ) + 0.2 * ( 1 * sa_scores[coin] )
     
-    return total_score, total_analysis
+    return total_scores, total_analysis
 
 
 if __name__ == "__main__":
-#    while(1):
-    cm_coins_features, coins_block_features, coins_social_features = fta_features()
-#    t0 = datetime.datetime.fromtimestamp(coins_block_features['btc']['LastBlockExplorerUpdateTS'])
-#    print(t0)
-#    t1 = t0 + datetime.timedelta(0,(30*60)+5)
-#    print('sleep for ' + str((t1-t0).seconds) + ' seconds')
-#    time.sleep((t1-t0).seconds)
 
+    total_scores, total_analysis = scoring_function()
