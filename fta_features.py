@@ -368,7 +368,7 @@ def sentiment_analysis_features(db = None):
     db.connect()
     cursor = db.cnxn.cursor()   
     print('cursor execute') 
-    cursor.execute('select top 500000 Symbol, SentimentScore, Timestamp from TweetsSearched ORDER BY myid  DESC')
+    cursor.execute('select top 500000 Symbol, SentimentScore, Timestamp from TweetsSearched WITH (NOLOCK) ORDER BY myid  DESC')
     print('cursor fetchall') 
     tweets = cursor.fetchall()
 
