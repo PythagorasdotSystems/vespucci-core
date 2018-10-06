@@ -77,7 +77,7 @@ def IndicatorsScore(df):
        score = new[['Date','Close','BB_score','macd_score','rsi_score','ichimoku_score','mac_score']].copy()
        score2 = score[len(score)-2:len(score)].copy()
        score2['5indicators'] = score2['BB_score'] + score2['macd_score'] + score2['rsi_score'] + score2['ichimoku_score'] + score2['mac_score']
-       score2['final_score'] = np.where(score2['5indicators'] > 3,(0.5*score2['5indicators'] + 0.5*score2['macd_score']),0.5*score2['macd_score'])
+       score2['final_score'] = np.where(score2['5indicators'] > 3,(0.5*score2['5indicators']/5.0 + 0.5*score2['macd_score']),0.5*score2['macd_score'])
        score = score2['final_score'][len(score2)-1:len(score2)]
        return score.iloc[0]
 
