@@ -8,7 +8,7 @@ import utils
 
 def ta_features():
        #Connect to Database
-       config = utils.tools.ConfigFileParser('/home/pythagorasdev/searchers/config.yml')
+       config = utils.tools.ConfigFileParser('/home/pythagorasdev/Pythagoras/config.yml')
        db=utils.DB(config.database)
        db.connect()
        cursor = db.cnxn.cursor()

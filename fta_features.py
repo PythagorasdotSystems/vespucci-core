@@ -1,5 +1,6 @@
 from pycoingecko.pycoingecko import CoinGeckoAPI
-from coinmetrics.coinmetrics import CoinMetricsAPI
+#from coinmetrics.coinmetrics import CoinMetricsAPI
+import coinmetrics
 
 from fta.fta_coin import social_features
 from fta.fta_coin import block_features
@@ -12,66 +13,61 @@ import datetime
 import time
 
 
-def fta_features(num_coins = 10):
+def fta_features():
+#def fta_features(num_coins = 10):
 
-    # LOGGER
-    #----------------------------------------------------
-    logger = logging.getLogger('fta_features_listener')
-    logger.setLevel(logging.DEBUG)
+    logger = utils.logger_default('fta_features_listener', '/home/pythagorasdev/Pythagoras/fta.log')
 
-    # file handler logs debug msg
-    fh = logging.FileHandler('fta.log')
-    fh.setLevel(logging.DEBUG)
-
-    formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
-    fh.setFormatter(formatter)
-
-    #smtp_handler = logging.handlers.SMTPHandler(
-    #        mailhost=("smtp.gmail.com", 465),
-    #        fromaddr="manolis@pythagoras.systems",
-    #        toaddrs="manolis@pythagoras.systems",
-    #        subject=u"AppName error!")
-
-    # add the handlers to logger
-    logger.addHandler(fh)
-    #logger.addHandler(smtp_handler)
-    #-----------------------------------------------------
-
-
-    cg = CoinGeckoAPI()
-    cm = CoinMetricsAPI()
+    #cg = CoinGeckoAPI()
+    #cm = CoinMetricsAPI()
 
     # returns top 50 by default
-    coins_ranked = cg.get_coins(order='market_cap_desc')
-    coins_ranked = coins_ranked[0:num_coins]
+    #coins_ranked = cg.get_coins(order='market_cap_desc')
+    #coins_ranked = coins_ranked[0:num_coins]
 
     #print('Features for top ' + str(len(coins_ranked)) + ' coins (ranked by market cap)')
-    logger.info('Features for top ' + str(len(coins_ranked)) + ' coins (ranked by market cap)')
-    coin_symbols_ranked = []
-    for coin in coins_ranked:
-        coin_symbols_ranked.append(coin['symbol'])
-        #print(coin['name'])
-        #print(coin['id'])
-        #print(coin['developer_data'])
-        ##print('\n')
-        ##print(coin['community_data'])
-        ##print(coin['public_interest_stats'])
-        #print(coin['last_updated'])
+    #logger.info('Features for top ' + str(len(coins_ranked)) + ' coins (ranked by market cap)')
+    #coin_symbols_ranked = []
+    #for coin in coins_ranked:
+    #    coin_symbols_ranked.append(coin['symbol'])
+    #    #print(coin['name'])
+    #    #print(coin['id'])
+    #    #print(coin['developer_data'])
+    #    ##print('\n')
+    #    ##print(coin['community_data'])
+    #    ##print(coin['public_interest_stats'])
+    #    #print(coin['last_updated'])
+
+    #print(coin_symbols_ranked)
+    #print(cm.get_supported_assets())
+    #coin_symbols_ranked = cm.get_supported_assets()
 
     while(1):
+
+        cg = CoinGeckoAPI()
+        cm = coinmetrics.CoinMetricsAPI()
+
         # COIN METRICS
-        cm_supported_assets = cm.get_supported_assets()
-        cm_coins_features = {}
-        # get all features for selected coins (supported by coinmetrics)
-        for c in coins_ranked:
-            if c['symbol'] in cm_supported_assets:
-                #print(c['symbol'] + ' in CoinMerics')
-                cm_coins_features.update(cm.get_all_data_types_for_assets(c['symbol']))
-            else:
-                #print('! ' + c['symbol'] + ' not in CoinMerics')
-                logger.info('! ' + c['symbol'] + ' not in CoinMerics')
+        #cm_supported_assets = cm.get_supported_assets()
+        coin_symbols_ranked = cm.get_supported_assets()
+        coin_symbols_ranked = ['vet' if coin=='ven' else coin for coin in coin_symbols_ranked]
+        #cm_coins_features = {}
+
+        ## get all features for selected coins (supported by coinmetrics)
+        #for c in coins_ranked:
+        #    if c['symbol'] in cm_supported_assets:
+        #        #print(c['symbol'] + ' in CoinMerics')
+        #        cm_coins_features.update(cm.get_all_data_types_for_assets(c['symbol']))
+        #    else:
+        #        #print('! ' + c['symbol'] + ' not in CoinMerics')
+        #        logger.info('! ' + c['symbol'] + ' not in CoinMerics')
         # get all features for all assets supported by coinmetrics
         #cm_coin_features = cm.get_all_data_types_for_all_assets()
+
+        #for c in coin_symbols_ranked:
+        #    cm_coins_features.update(cm.get_all_data_types_for_assets(c))
+        cm_coins_features = cm.get_all_data_types_for_all_assets()
+        cm_coins_features['vet'] = cm_coins_features.pop('ven')
 
         ## not supported by cryptocompare
         #cm_supported_assets.remove('cennz')
@@ -83,6 +79,8 @@ def fta_features(num_coins = 10):
         coins_block_features = block_features(coin_symbols_ranked)
         coins_social_features = social_features(coin_symbols_ranked)
 
+        coins_ranked = coinGecko_developer_update(cg, coin_symbols_ranked, cg.get_coins_list())
+
         # Databases
         # update coin list from CoinGecko
         coins_ranked = coinGecko_list_update(coins_ranked)
@@ -90,6 +88,16 @@ def fta_features(num_coins = 10):
         db_coinmetrics(cm_coins_features)
         db_cryptocompare(coins_block_features)
         db_developer(coins_ranked)
+        #print('cm_coins_features')
+        #for coin in cm_coins_features.items():
+        #    print(coin)
+        #print('coins_block_features')
+        #for coin  in coins_block_features.items():
+        #    print(coin)
+        #print('coins_ranked')
+        #for coin in coins_ranked:
+        #    print(coin['symbol'])
+        #    print(coin['developer_data'])
 
         # Sleep
         t=datetime.datetime.now()
@@ -103,6 +111,18 @@ def fta_features(num_coins = 10):
 
 
     return cm_coins_features, coins_block_features, coins_social_features
+
+
+def coinGecko_developer_update(cg, cm_assets, cg_list):
+    #cg_list = cg.get_coins_list()
+    #cm_assets = cm.get_supported_assets()
+
+    response = []
+    for coin in cg_list:
+        if coin['symbol'] in cm_assets:
+            response.append(cg.get_coin_by_id(coin['id']))
+
+    return response
 
 
 def coinGecko_list_update(coin_list):
@@ -170,8 +190,19 @@ def db_cryptocompare(coin_features, db = None):
     db.connect()
 
     for coin in coin_features:
-        #print(coin_features[coin])
+        print(coin_features[coin])
         Values = []
+
+        coin_features[coin]['TotalCoinSupply'] = (0.0 if coin_features[coin]['TotalCoinSupply'] is '' else coin_features[coin]['TotalCoinSupply'])
+        coin_features[coin]['TotalCoinsMined'] = (0.0 if coin_features[coin]['TotalCoinsMined'] is '' else coin_features[coin]['TotalCoinsMined'])
+        coin_features[coin]['BlockTime'] = (0.0 if coin_features[coin]['BlockTime'] is '' else coin_features[coin]['BlockTime'])
+        coin_features[coin]['BlockNumber'] = (0.0 if coin_features[coin]['BlockNumber'] is '' else coin_features[coin]['BlockNumber'])
+        coin_features[coin]['BlockReward'] = (0.0 if coin_features[coin]['BlockReward'] is '' else coin_features[coin]['BlockReward'])
+        coin_features[coin]['BlockRewardReduction'] = (0.0 if coin_features[coin]['BlockRewardReduction'] is '' else coin_features[coin]['BlockRewardReduction'])
+        coin_features[coin]['NetHashesPerSecond'] = (0.0 if coin_features[coin]['NetHashesPerSecond'] is '' else coin_features[coin]['NetHashesPerSecond'])
+        coin_features[coin]['PreviousTotalCoinsMined'] = (0.0 if coin_features[coin]['PreviousTotalCoinsMined'] is '' else coin_features[coin]['PreviousTotalCoinsMined'])
+        coin_features[coin]['LastBlockExplorerUpdateTS'] = (int(datetime.datetime.now().timestamp()) if coin_features[coin]['LastBlockExplorerUpdateTS'] is '' else coin_features[coin]['LastBlockExplorerUpdateTS'])
+
 
         db_query = 'INSERT INTO FtaCryptoCompare ('
 
@@ -243,14 +274,15 @@ def db_coinmetrics(coin_features, db = None):
     return r
 
 
-def coinGeckoHistoricalDeveloper(coin_list, from_date):
+def coinGeckoHistoricalDeveloper(coin_list, from_date, until_date = datetime.date.today().strftime('%d-%m-%Y')):
     cg = CoinGeckoAPI()
 
     date = datetime.datetime.strptime(from_date, '%d-%m-%Y').date()
+    until_date = datetime.datetime.strptime(until_date, '%d-%m-%Y').date()
     #taday = datetime.date.today()
 
     r = []
-    while date!=datetime.date.today():
+    while date <= until_date:
         print(date)
         for coin in coin_list:
             responce = cg.get_coin_history_by_id(coin['id'], date.strftime('%d-%m-%Y'))
@@ -277,7 +309,7 @@ def find_description_position(description, feature_name):
 def block_explorer_features(db = None):
     if not db:
         #db = DB()
-        config = utils.tools.ConfigFileParser('/home/pythagorasdev/searchers/config.yml')
+        config = utils.tools.ConfigFileParser('/home/pythagorasdev/Pythagoras/config.yml')
         db=utils.DB(config.database)
     db.connect()
     cursor = db.cnxn.cursor()
@@ -363,7 +395,7 @@ def block_explorer_features(db = None):
 def sentiment_analysis_features(db = None):
     if not db:
         #db = DB()
-        config = utils.tools.ConfigFileParser('/home/pythagorasdev/searchers/config.yml')
+        config = utils.tools.ConfigFileParser('/home/pythagorasdev/Pythagoras/config.yml')
         db=utils.DB(config.database)
     db.connect()
     cursor = db.cnxn.cursor()   
@@ -419,7 +451,7 @@ def expert_analysis_features():
 def developer_analysis_features(db = None):
     if not db:
         #db = DB()
-        config = utils.tools.ConfigFileParser('/home/pythagorasdev/searchers/config.yml')
+        config = utils.tools.ConfigFileParser('/home/pythagorasdev/Pythagoras/config.yml')
         db=utils.DB(config.database)
     db.connect()
     cursor = db.cnxn.cursor()    

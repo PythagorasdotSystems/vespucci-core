@@ -81,3 +81,4 @@ def social_features(coin_names):
 if __name__ == "__main__":
     print('FTA coin snapshot example')
     r = coin_full_snapshot('btc')
+    s = social_features('btc')

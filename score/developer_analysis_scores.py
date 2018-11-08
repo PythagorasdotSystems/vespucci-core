@@ -7,13 +7,14 @@ import utils
 def da_features(db = None):
     if not db:
         #db = DB()
-        config = utils.tools.ConfigFileParser('/home/pythagorasdev/searchers/config.yml')
+        config = utils.tools.ConfigFileParser('/home/pythagorasdev/Pythagoras/config.yml')
         db=utils.DB(config.database)
     db.connect()
     cursor = db.cnxn.cursor()    
 
     cursor.execute('select Symbol, forks, stars, subscribers, total_issues, closed_issues, pull_requests_merged, pull_request_contributors, commit_count_4_weeks from FtaDeveloper where last_updated >=  DATEADD(DAY, -3, GETDATE()) AND last_updated <  DATEADD(DAY, -2, GETDATE())')
     R = cursor.fetchall()
+    print(R)
     t0 = {}
     for r in R:
         if r[0] not in t0:
@@ -29,6 +30,7 @@ def da_features(db = None):
 
     cursor.execute('select Symbol, forks, stars, subscribers, total_issues, closed_issues, pull_requests_merged, pull_request_contributors, commit_count_4_weeks from FtaDeveloper where last_updated >=  DATEADD(DAY, -2, GETDATE()) AND last_updated <  DATEADD(DAY, -1, GETDATE())')
     R = cursor.fetchall()
+    print(R)
     t1 = {}
     for r in R:
         if r[0] not in t1:
@@ -44,13 +46,18 @@ def da_features(db = None):
     
     da_feats = {}
     for coin in t1:
+
+        # check if coin exists in both lists
+        if coin not in t0:
+            continue
+
         da_feats[coin] = {}
 
         da_feats[coin]['open_source'] = (1 if sum(t1[coin].values()) > 0 else -1)
 
         da_feats[coin]['commit_count_4_weeks'] = (1 if t1[coin]['commit_count_4_weeks'] > 0 else 0)
 
-        if t1[coin]['total_issues'] > 0 and t0[coin]['total_issues'] > 0 and ((t1[coin]['closed_issues'] / ( t1[coin]['total_issues'] - t1[coin]['closed_issues'] )) >= (t0[coin]['closed_issues'] / ( t0[coin]['total_issues'] - t0[coin]['closed_issues'] ))):
+        if t1[coin]['total_issues'] > 0 and t0[coin]['total_issues'] > 0 and (t0[coin]['total_issues'] - t0[coin]['closed_issues']) > 0 and (t1[coin]['total_issues'] - t1[coin]['closed_issues']) > 0 and ((t1[coin]['closed_issues'] / ( t1[coin]['total_issues'] - t1[coin]['closed_issues'] )) >= (t0[coin]['closed_issues'] / ( t0[coin]['total_issues'] - t0[coin]['closed_issues'] ))):
             da_feats[coin]['issues_rate'] = 1
         else:
             da_feats[coin]['issues_rate'] = 0
