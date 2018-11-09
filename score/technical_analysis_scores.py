@@ -1,6 +1,6 @@
 from ta import *
 import pandas as pd
-from technical_analysis_funcs import *
+from .technical_analysis_funcs import *
 
 import sys
 sys.path.append('..')

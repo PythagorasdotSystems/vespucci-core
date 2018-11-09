@@ -5,50 +5,11 @@ import utils
 import datetime
 import time
 
-import technical_analysis_scores
-import sentiment_analysis_scores
-import developer_analysis_scores
-import expert_analysis_scores
-import block_explorer_analysis_scores
-
-
-## Technical Analysis (ta) features
-#def ta_features(db = None):
-#    if not db:
-#        config = utils.tools.ConfigFileParser('/home/pythagorasdev/searchers/config.yml')
-#        db=utils.DB(config.database)
-#    db.connect()
-#    cursor = db.cnxn.cursor()
-#
-#    # execute example
-#    #cursor.execute('SELECT * FROM FtaDeveloper')
-#    #rows = cursor.fetchall()
-#
-#
-#    # after finishing everything disconnect from db
-#    db.disconnect()
-#    # and return if results in a dictionary; else write them to db
-#    #return ta_feats
-
-
-## Technical Analysis (ta) scoring function
-#def ta_scoring_function(ta_feats = None, db = None):
-#    # ta_feats if results in dictionary or
-#    if not db:
-#        config = utils.tools.ConfigFileParser('/home/pythagorasdev/searchers/config.yml')
-#        db=utils.DB(config.database)
-#    db.connect()
-#    cursor = db.cnxn.cursor()
-#
-#    # dictionary with scores, format should be something like {'ltc': 50, 'btc': 75, 'eos': 85, etc.}
-#    # you can check the functions bellow as examples
-#    scores = {}
-#
-#    # after finishing everything disconnect from db
-#    db.disconnect()
-#    # return dictionay with scores
-#    return scores
-
+from . import technical_analysis_scores
+from . import sentiment_analysis_scores
+from . import developer_analysis_scores
+from . import expert_analysis_scores
+from . import block_explorer_analysis_scores
 
 # Scoring Function to combine all scores
 def scoring_function():
