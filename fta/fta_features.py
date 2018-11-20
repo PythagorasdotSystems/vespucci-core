@@ -1,9 +1,8 @@
-from pycoingecko.pycoingecko import CoinGeckoAPI
-#from coinmetrics.coinmetrics import CoinMetricsAPI
+import pycoingecko
 import coinmetrics
 
-from fta.fta_coin import social_features
-from fta.fta_coin import block_features
+from .fta_coin import social_features
+from .fta_coin import block_features
 
 from db import DB
 import utils
@@ -15,120 +14,46 @@ import time
 import score
 
 def fta_features():
-#def fta_features(num_coins = 10):
 
     logger = utils.logger_default('fta_features_listener', '/home/pythagorasdev/Pythagoras/fta.log')
 
-    #cg = CoinGeckoAPI()
-    #cm = CoinMetricsAPI()
+    logger.info('Starting (Update FTA feats and compute score')
 
-    # returns top 50 by default
-    #coins_ranked = cg.get_coins(order='market_cap_desc')
-    #coins_ranked = coins_ranked[0:num_coins]
+    # init APIs
+    cg = pycoingecko.CoinGeckoAPI()
+    cm = coinmetrics.CoinMetricsAPI()
 
-    #print('Features for top ' + str(len(coins_ranked)) + ' coins (ranked by market cap)')
-    #logger.info('Features for top ' + str(len(coins_ranked)) + ' coins (ranked by market cap)')
-    #coin_symbols_ranked = []
-    #for coin in coins_ranked:
-    #    coin_symbols_ranked.append(coin['symbol'])
-    #    #print(coin['name'])
-    #    #print(coin['id'])
-    #    #print(coin['developer_data'])
-    #    ##print('\n')
-    #    ##print(coin['community_data'])
-    #    ##print(coin['public_interest_stats'])
-    #    #print(coin['last_updated'])
+    logger.info('Get FTA feats')
 
-    #print(coin_symbols_ranked)
-    #print(cm.get_supported_assets())
-    #coin_symbols_ranked = cm.get_supported_assets()
+    # CoinMetrics API
+    #cm_supported_assets = cm.get_supported_assets()
+    cm_supported_assets = cm.get_supported_assets()
+    cm_supported_assets = ['vet' if coin=='ven' else coin for coin in cm_supported_assets]
 
-    while(1):
+    cm_coins_features = cm.get_all_data_types_for_all_assets()
+    cm_coins_features['vet'] = cm_coins_features.pop('ven')
 
-        logger.info('Starting (Update FTA feats and compute score')
+    # CryptoCompare API
+    coins_block_features = block_features(cm_supported_assets)
+    coins_social_features = social_features(cm_supported_assets)
 
-        cg = CoinGeckoAPI()
-        cm = coinmetrics.CoinMetricsAPI()
+    # CoinGecko API
+    coins_dev_features = coinGecko_developer_update(cg, cm_supported_assets, cg.get_coins_list())
+    coins_dev_features = coinGecko_list_update(coins_dev_features)
 
-        logger.info('Get FTA feats')
-
-        # COIN METRICS
-        #cm_supported_assets = cm.get_supported_assets()
-        coin_symbols_ranked = cm.get_supported_assets()
-        coin_symbols_ranked = ['vet' if coin=='ven' else coin for coin in coin_symbols_ranked]
-        #cm_coins_features = {}
-
-        ## get all features for selected coins (supported by coinmetrics)
-        #for c in coins_ranked:
-        #    if c['symbol'] in cm_supported_assets:
-        #        #print(c['symbol'] + ' in CoinMerics')
-        #        cm_coins_features.update(cm.get_all_data_types_for_assets(c['symbol']))
-        #    else:
-        #        #print('! ' + c['symbol'] + ' not in CoinMerics')
-        #        logger.info('! ' + c['symbol'] + ' not in CoinMerics')
-        # get all features for all assets supported by coinmetrics
-        #cm_coin_features = cm.get_all_data_types_for_all_assets()
-
-        #for c in coin_symbols_ranked:
-        #    cm_coins_features.update(cm.get_all_data_types_for_assets(c))
-        cm_coins_features = cm.get_all_data_types_for_all_assets()
-        cm_coins_features['vet'] = cm_coins_features.pop('ven')
-
-        ## not supported by cryptocompare
-        #cm_supported_assets.remove('cennz')
-        #cm_supported_assets.remove('ethos')
-        #cm_supported_assets.remove('ven')
-        #coins_block_features = block_features(cm_supported_assets)
-        #coins_social_features = social_features(cm_supported_assets)
-
-        coins_block_features = block_features(coin_symbols_ranked)
-        coins_social_features = social_features(coin_symbols_ranked)
-
-        coins_ranked = coinGecko_developer_update(cg, coin_symbols_ranked, cg.get_coins_list())
-
-        # Databases
-        # update coin list from CoinGecko
-        coins_ranked = coinGecko_list_update(coins_ranked)
-
-        logger.info('Update DB with FTA feats')
-
-        db_coinmetrics(cm_coins_features)
-        db_cryptocompare(coins_block_features)
-        db_developer(coins_ranked)
-        #print('cm_coins_features')
-        #for coin in cm_coins_features.items():
-        #    print(coin)
-        #print('coins_block_features')
-        #for coin  in coins_block_features.items():
-        #    print(coin)
-        #print('coins_ranked')
-        #for coin in coins_ranked:
-        #    print(coin['symbol'])
-        #    print(coin['developer_data'])
+    return cm_coins_features, coins_block_features, coins_dev_features, coins_social_features
 
 
-        #--------- ! THIS IS TMP HERE ----------
-        logger.info('Compute new score and update score DB')
-        # COMPUTE SCORING FUNCTION
-        total_scores, total_analysis = score.scoring_function()
-        # UPDATE DB WITH SCORES
-        if total_scores:
-            logger.info('Insert scores in DB')
-            score.updateScoresDB(total_scores)
-        #---------------------------------------
-
-        # Sleep
-        t=datetime.datetime.now()
-        t0=datetime.datetime(t.year, t.month, t.day, 12)
-        t1=t0 + datetime.timedelta(days=1)
-
-        logger.info('Sleep until ' + str(t1) + ' (' + str((t1-t0).total_seconds()) + ' seconds)')
-        #logger.info('Sleep for ' + str((t1-t0).total_seconds()) + ' seconds!')
-
-        time.sleep((t1-t0).total_seconds())
+def update_fta_db(cm_coins_features, coins_block_features, coins_dev_features):
+    #logger.info('Update DB with FTA feats')
+    db_coinmetrics(cm_coins_features)
+    db_cryptocompare(coins_block_features)
+    db_developer(coins_dev_features)
 
 
-    return cm_coins_features, coins_block_features, coins_social_features
+def update():
+    cm_coins_features, coins_block_features, coins_dev_features, coins_social_features = fta_features()
+    update_fta_db(cm_coins_features, coins_block_features, coins_dev_features)
 
 
 def coinGecko_developer_update(cg, cm_assets, cg_list):
@@ -136,15 +61,40 @@ def coinGecko_developer_update(cg, cm_assets, cg_list):
     #cm_assets = cm.get_supported_assets()
 
     response = []
+    
+    # there are some duplicates also !! (keep them here to check)
+    coin_seen  = {}
+
     for coin in cg_list:
-        if coin['symbol'] in cm_assets:
+        if coin['symbol'].lower() in cm_assets:
+
+            if coin['symbol'].lower() == 'btg' and coin['id'].lower() != 'bitcoin-gold':
+                continue
+            if coin['symbol'].lower() == 'bat' and coin['id'].lower() != 'basic-attention-token':
+                continue
+            if coin['symbol'].lower() == 'cvc' and coin['id'].lower() != 'civic':
+                continue
+            if coin['symbol'].lower() == 'pax' and coin['id'].lower() != 'paxos-standard':
+                continue
+
+            if coin['symbol'] in coin_seen:
+                print(coin['symbol'])
+                print(coin['id'])
+                print('---OLD---')
+                print(coin_seen[coin['symbol']])
+                print('------------------------\n')
+                continue
+            else:
+                print(coin['symbol'], ' ', coin['id'])
+                coin_seen[coin['symbol']] = coin['id']
+
             response.append(cg.get_coin_by_id(coin['id']))
 
     return response
 
 
 def coinGecko_list_update(coin_list):
-    cg = CoinGeckoAPI()
+    cg = pycoingecko.CoinGeckoAPI()
     response = []
     for coin in coin_list:
         #print(coin)
@@ -314,11 +264,5 @@ def coinGeckoHistoricalDeveloper(coin_list, from_date, until_date = datetime.dat
 
 
 if __name__ == "__main__":
-#    while(1):
-    cm_coins_features, coins_block_features, coins_social_features = fta_features()
-#    t0 = datetime.datetime.fromtimestamp(coins_block_features['btc']['LastBlockExplorerUpdateTS'])
-#    print(t0)
-#    t1 = t0 + datetime.timedelta(0,(30*60)+5)
-#    print('sleep for ' + str((t1-t0).seconds) + ' seconds')
-#    time.sleep((t1-t0).seconds)
 
+    cm_coins_features, coins_block_features, coins_dev_features, coins_social_features = fta_features()

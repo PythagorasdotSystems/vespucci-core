@@ -38,6 +38,7 @@ class ConfigFileParser:
         
         self.database = self.__config['db']
         self.twitter = self.__config['twitter']
+        self.healthchecks = self.__config['healthchecks']
 
     @property
     def database(self):

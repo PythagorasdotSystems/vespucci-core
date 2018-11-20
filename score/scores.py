@@ -100,7 +100,7 @@ def scoring_function():
     return total_scores, total_analysis
 
 
-def updateScoresDB(scores):
+def update_scores_db(scores):
     config = utils.tools.ConfigFileParser('/home/pythagorasdev/Pythagoras/config.yml')
     db=utils.DB(config.database)
     db.connect()
@@ -118,26 +118,18 @@ def updateScoresDB(scores):
         cursor.commit()
 
 
-if __name__ == "__main__":
-    # Sleep
-    t=datetime.datetime.now()
-    t0=datetime.datetime(t.year, t.month, t.day, 12)
-    t1=t0 + datetime.timedelta(days=1)
-    if t.hour < 12:
-        t0=datetime.datetime(t.year, t.month, t.day, 12, 30)
-        print('Sleep for ' + str((t0-t).total_seconds()))
-        time.sleep((t0-t).total_seconds())
+def update():
+
+    logger = utils.logger_default('scoring_function', '/home/pythagorasdev/Pythagoras/scores.log')
+
+    logger.info('Compute new scores and update score DB')
 
     total_scores, total_analysis = scoring_function()
-    while(1):
-        total_scores, total_analysis = scoring_function()
-        print('Update DB')
-        updateScoresDB(total_scores)
+    if total_scores:
+        logger.info('Insert new scores in DB')
+        update_scores_db(total_scores)
 
-        t=datetime.datetime.now()
-        t0=datetime.datetime(t.year, t.month, t.day, 12, 30)
-        t1=t0 + datetime.timedelta(days=1)
-        print('Sleep until ', t1)
-        print(':: Sleep for ' + str((t1-t0).total_seconds()))
-        time.sleep((t1-t0).total_seconds())
 
+if __name__ == "__main__":
+
+    total_scores, total_analysis = scoring_function()

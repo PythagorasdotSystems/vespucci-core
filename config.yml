@@ -1,0 +1,17 @@
+db:
+        server: ""
+        database: ""
+        username: ""
+        password: ""
+        driver: ""
+twitter:
+        access_token: ""
+        access_token_secret: ""
+        consumer_key: ""
+        consumer_secret: ""
+healthchecks:
+        sa:
+                twitter: ""
+        fta: ""
+        ta: ""
+        score: ""
