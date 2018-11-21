@@ -4,14 +4,14 @@
 pip3 install crycompare
 # pycoingecko and coinmetrics must be cloned in the root folder of the project
 git clone https://github.com/man-c/pycoingecko.git
+python3 setup.py install
 git clone https://github.com/man-c/coinmetrics.git
+python3 setup.py install
 ```
 
-### Usage
+### Usage Examples
+Compute todays score
 ```
-python3 fta_features.py
-```
-or (to enter interactive mode after executing the script)
-```
-python3 -i fta_features.py
+import v_score
+total_scores = v_score.scoring_function()
 ```
