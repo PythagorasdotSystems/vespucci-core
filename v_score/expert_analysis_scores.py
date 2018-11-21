@@ -6,7 +6,7 @@ import utils
 # Expert Analysis features
 def ea_features():
     scores_expert = {}
-    with open('/home/pythagorasdev/fta/fta_expert_scores.txt', 'r') as f:
+    with open('../fta_expert_scores.txt', 'r') as f:
         for line in f:
             line=line.strip().split(',')
             # normalize values from [1,10] to [0.1,1]

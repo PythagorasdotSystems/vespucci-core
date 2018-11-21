@@ -33,7 +33,7 @@ def find_description_position(description, feature_name):
 def bea_features(db = None):
     if not db:
         #db = DB()
-        config = utils.tools.ConfigFileParser('/home/pythagorasdev/Pythagoras/config.yml')
+        config = utils.tools.ConfigFileParser('../config.yml')
         db=utils.DB(config.database)
     db.connect()
     cursor = db.cnxn.cursor()

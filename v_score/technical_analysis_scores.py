@@ -8,12 +8,12 @@ import utils
 
 def ta_features():
        #Connect to Database
-       config = utils.tools.ConfigFileParser('/home/pythagorasdev/Pythagoras/config.yml')
+       config = utils.tools.ConfigFileParser('../config.yml')
        db=utils.DB(config.database)
        db.connect()
        cursor = db.cnxn.cursor()
 
-       cursor.execute('Select Symbol,Close_value,Date,High,Low,Market_Cap,Open_value,Volume from ta.cryptoHistory WHERE Date >  DATEADD(DAY, -200, GETDATE())')
+       cursor.execute('Select Symbol,Close_value,Date,High,Low,Market_Cap,Open_value,Volume from dbo.cryptoHistory WHERE Date >  DATEADD(DAY, -200, GETDATE())')
        R = cursor.fetchall()
        t0 = {}
        for r in R:
@@ -38,6 +38,7 @@ def ta_features():
 def ta_scoring_function(ta_feats):
        scores = {}
        for key in ta_feats.keys():
+        #print(key)
        	df = pd.DataFrame.from_dict(ta_feats[key],orient='index').transpose()
        	score = IndicatorsScore(df)
        	scores[key] = int(score*100)
@@ -79,6 +80,7 @@ def IndicatorsScore(df):
        score2['5indicators'] = score2['BB_score'] + score2['macd_score'] + score2['rsi_score'] + score2['ichimoku_score'] + score2['mac_score']
        score2['final_score'] = np.where(score2['5indicators'] > 3,(0.5*score2['5indicators']/5.0 + 0.5*score2['macd_score']),0.5*score2['macd_score'])
        score = score2['final_score'][len(score2)-1:len(score2)]
+       #print(score2)
        return score.iloc[0]
 
 def ta_scores():

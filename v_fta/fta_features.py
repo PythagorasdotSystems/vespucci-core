@@ -11,11 +11,11 @@ import logging
 import datetime
 import time
 
-import score
+#import score
 
 def fta_features():
 
-    logger = utils.logger_default('fta_features_listener', '/home/pythagorasdev/Pythagoras/fta.log')
+    logger = utils.logger_default('fta_features_listener', '../../fta.log')
 
     logger.info('Starting (Update FTA feats and compute score')
 
@@ -40,6 +40,7 @@ def fta_features():
     # CoinGecko API
     coins_dev_features = coinGecko_developer_update(cg, cm_supported_assets, cg.get_coins_list())
     coins_dev_features = coinGecko_list_update(coins_dev_features)
+
 
     return cm_coins_features, coins_block_features, coins_dev_features, coins_social_features
 

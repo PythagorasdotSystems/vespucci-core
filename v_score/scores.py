@@ -19,6 +19,9 @@ def scoring_function():
     # Block Explorer Analysis
 
     bea_scores, bea_feats = block_explorer_analysis_scores.bea_scores()
+    # change keys to lowercase
+    bea_scores = {(k.lower()).strip(): v for k, v in bea_scores.items()}
+    bea_feats = {(k.lower)().strip(): v for k, v in bea_feats.items()}
 
     total_analysis['bea_feats'] = bea_feats
     total_analysis['bea_scores'] = bea_scores
@@ -39,6 +42,9 @@ def scoring_function():
     # Sentiment Analysis
 
     sa_scores, sa_feats = sentiment_analysis_scores.sa_scores()
+    # change keys to lowercase
+    sa_scores = {(k.lower()).strip(): v for k, v in sa_scores.items()}
+    sa_feats = {(k.lower)().strip(): v for k, v in sa_feats.items()}
 
     total_analysis['sa_feats'] = sa_feats
     total_analysis['sa_scores'] = sa_scores
@@ -49,6 +55,9 @@ def scoring_function():
     # Developer Analysis
 
     da_scores, da_feats = developer_analysis_scores.da_scores()
+    # change keys to lowercase
+    da_scores = {(k.lower()).strip(): v for k, v in da_scores.items()}
+    da_feats = {(k.lower)().strip(): v for k, v in da_feats.items()}
 
     total_analysis['da_feats'] = da_feats
     total_analysis['da_scores'] = da_scores
@@ -57,8 +66,8 @@ def scoring_function():
 
     ta_scores, ta_feats = technical_analysis_scores.ta_scores()
     # change keys to lowercase
-    ta_scores = {k.lower(): v for k, v in ta_scores.items()}
-    ta_feats = {k.lower(): v for k, v in ta_feats.items()}
+    ta_scores = {(k.lower()).strip(): v for k, v in ta_scores.items()}
+    ta_feats = {(k.lower)().strip(): v for k, v in ta_feats.items()}
 
     total_analysis['ta_feats'] = ta_feats
     total_analysis['ta_scores'] = ta_scores
@@ -101,7 +110,7 @@ def scoring_function():
 
 
 def update_scores_db(scores):
-    config = utils.tools.ConfigFileParser('/home/pythagorasdev/Pythagoras/config.yml')
+    config = utils.tools.ConfigFileParser('../config.yml')
     db=utils.DB(config.database)
     db.connect()
     cursor = db.cnxn.cursor()
@@ -120,7 +129,7 @@ def update_scores_db(scores):
 
 def update():
 
-    logger = utils.logger_default('scoring_function', '/home/pythagorasdev/Pythagoras/scores.log')
+    logger = utils.logger_default('scoring_function', '../../scores.log')
 
     logger.info('Compute new scores and update score DB')
 
