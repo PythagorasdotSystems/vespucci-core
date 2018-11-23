@@ -38,8 +38,7 @@ def bea_features(db = None):
     db.connect()
     cursor = db.cnxn.cursor()
 
-    #cursor.execute('select * from FtaCoinMetrics where CM_Timestamp >= 10/9/2018  AND CM_Timestamp <  11/9/2018')
-    cursor.execute('select * from FtaCoinMetrics where CM_Timestamp >=  DATEADD(DAY, -3, GETDATE()) AND CM_Timestamp <  DATEADD(DAY, -2, GETDATE())')
+    cursor.execute('select * from FtaCoinMetrics where CM_Timestamp >=  DATEADD( DAY, -2, CAST(CAST(GETDATE() AS DATE) AS DATETIME) ) AND CM_Timestamp <  DATEADD( DAY, -1, CAST(CAST(GETDATE() AS DATE) AS DATETIME) )')
     R = cursor.fetchall()
     pos = find_description_position(cursor.description, 'Symbol')
     t0 = {}
@@ -49,8 +48,7 @@ def bea_features(db = None):
     print('BEA feats:: t0 length ', len(t0))
     #print(t0)
 
-    cursor.execute('select * from FtaCoinMetrics where CM_Timestamp >=  DATEADD(DAY, -2, GETDATE()) AND CM_Timestamp <  DATEADD(DAY, -1, GETDATE())')
-    #cursor.execute('select * from FtaCoinMetrics where CM_Timestamp >= 9/9/2018  AND CM_Timestamp <  10/9/2018')
+    cursor.execute('select * from FtaCoinMetrics where CM_Timestamp >=  DATEADD( DAY, -1, CAST(CAST(GETDATE() AS DATE) AS DATETIME) ) AND CM_Timestamp <  DATEADD( DAY, -0, CAST(CAST(GETDATE() AS DATE) AS DATETIME) )')
     R = cursor.fetchall()
     pos = find_description_position(cursor.description, 'Symbol')
     t1 = {}
@@ -60,7 +58,6 @@ def bea_features(db = None):
     print('BEA feats:: t1 length ', len(t1))
     #print(t1)
 
-    #cursor.execute('select * from FtaCoinMetrics where CM_Timestamp >=  DATEADD(DAY, -2, GETDATE()) AND CM_Timestamp <  DATEADD(DAY, -1, GETDATE())')
     # get position of symbol
     pos = find_description_position(cursor.description, 'Symbol')
     #descr = []
@@ -124,7 +121,7 @@ def bea_features(db = None):
     #block_feats['medianfee'] = medianfee
     #block_feats['activeaddresses'] = activeaddresses
 
-    cursor.execute('select * from FtaCryptoCompare where LastBlockExplorerUpdateTS >=  DATEADD(DAY, -2, GETDATE()) AND LastBlockExplorerUpdateTS <  DATEADD(DAY, -1, GETDATE())')
+    cursor.execute('select * from FtaCryptoCompare where LastBlockExplorerUpdateTS >=  DATEADD( DAY, -1, CAST(CAST(GETDATE() AS DATE) AS DATETIME) ) AND LastBlockExplorerUpdateTS <  DATEADD( DAY, -0, CAST(CAST(GETDATE() AS DATE) AS DATETIME) )')
     #t1 = cursor.fetchall()
     R = cursor.fetchall()
     pos = find_description_position(cursor.description, 'Symbol')
