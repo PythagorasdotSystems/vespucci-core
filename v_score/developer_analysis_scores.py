@@ -2,6 +2,7 @@ import sys
 sys.path.append('..')
 import utils
 
+import datetime
 
 # Developer Analysis features
 def da_features(db = None):
@@ -12,7 +13,7 @@ def da_features(db = None):
     db.connect()
     cursor = db.cnxn.cursor()    
 
-    cursor.execute('select Symbol, forks, stars, subscribers, total_issues, closed_issues, pull_requests_merged, pull_request_contributors, commit_count_4_weeks from FtaDeveloper where last_updated >=  DATEADD(DAY, -3, GETDATE()) AND last_updated <  DATEADD(DAY, -2, GETDATE())')
+    cursor.execute('select Symbol, forks, stars, subscribers, total_issues, closed_issues, pull_requests_merged, pull_request_contributors, commit_count_4_weeks, last_updated from FtaDeveloper where (last_updated >=  DATEADD( DAY, -2, CAST(CAST(GETDATE() AS DATE) AS DATETIME) ) AND last_updated <  DATEADD( DAY, -1, CAST(CAST(GETDATE() AS DATE) AS DATETIME) ))')
     R = cursor.fetchall()
     #print(R)
     t0 = {}
@@ -27,8 +28,10 @@ def da_features(db = None):
         t0[r[0]]['pull_requests_merged'] = r[6]
         t0[r[0]]['pull_request_contributors'] = r[7]
         t0[r[0]]['commit_count_4_weeks'] = r[8]
+    #print('FTA_developer: t0',str(r[-1]))
+    print('FTA_developer: len',len(t0))
 
-    cursor.execute('select Symbol, forks, stars, subscribers, total_issues, closed_issues, pull_requests_merged, pull_request_contributors, commit_count_4_weeks from FtaDeveloper where last_updated >=  DATEADD(DAY, -2, GETDATE()) AND last_updated <  DATEADD(DAY, -1, GETDATE())')
+    cursor.execute('select Symbol, forks, stars, subscribers, total_issues, closed_issues, pull_requests_merged, pull_request_contributors, commit_count_4_weeks, last_updated from FtaDeveloper where last_updated >=  DATEADD( DAY, -1, CAST(CAST(GETDATE() AS DATE) AS DATETIME) ) AND last_updated <  DATEADD( DAY, -0, CAST(CAST(GETDATE() AS DATE) AS DATETIME) )')
     R = cursor.fetchall()
     #print(R)
     t1 = {}
@@ -43,12 +46,15 @@ def da_features(db = None):
         t1[r[0]]['pull_requests_merged'] = r[6]
         t1[r[0]]['pull_request_contributors'] = r[7]
         t1[r[0]]['commit_count_4_weeks'] = r[8]   
+    #print('FTA_developer: t1',str(r[-1]))
+    print('FTA_developer: len',len(t1))
     
     da_feats = {}
     for coin in t1:
 
         # check if coin exists in both lists
         if coin not in t0:
+            print('FTA_developer: coin feats only for one day:', coin)
             continue
 
         da_feats[coin] = {}
