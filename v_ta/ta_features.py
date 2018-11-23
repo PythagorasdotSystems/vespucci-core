@@ -34,8 +34,8 @@ def write_to_database(df):
          row['Open'],
          row['Volume']
         )
-        cnxn.commit()
-    cnxn.close()
+        cursor.commit()
+    db.disconnect()
     #print(df)
 
 def save_crypto_coins_history(i_from_date=None, i_to_date=None,i_coin_markets=[]):
