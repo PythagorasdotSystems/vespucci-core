@@ -13,7 +13,7 @@ def ta_features():
        db.connect()
        cursor = db.cnxn.cursor()
 
-       cursor.execute('Select Symbol,Close_value,Date,High,Low,Market_Cap,Open_value,Volume from dbo.cryptoHistory WHERE Date >  DATEADD(DAY, -200, GETDATE())')
+       cursor.execute('Select Symbol,Close_value,Date,High,Low,Market_Cap,Open_value,Volume from dbo.cryptoHistory WHERE Date >  DATEADD( DAY, -200, CAST(CAST(GETDATE() AS DATE) AS DATETIME ))')
        R = cursor.fetchall()
        t0 = {}
        for r in R:
