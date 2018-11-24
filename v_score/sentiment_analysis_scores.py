@@ -6,30 +6,48 @@ import datetime
 import time
 
 # Sentiment Analysis features
-def sa_features(db = None):
+def sa_features(sel_date = None, db = None):
     if not db:
         #db = DB()
-        config = utils.tools.ConfigFileParser('../config.yml')
+        config = utils.tools.ConfigFileParser('/home/pythagorasdev/Pythagoras/config.yml')
         db=utils.DB(config.database)
     db.connect()
     cursor = db.cnxn.cursor()   
-    print('cursor execute') 
-    cursor.execute('select top 500000 Symbol, SentimentScore, Timestamp from TweetsSearched WITH (NOLOCK) ORDER BY myid  DESC')
-    print('cursor fetchall') 
+    #print('cursor execute')
+    if sel_date:
+        today = sel_date
+        today = datetime.datetime(today.year,today.month,today.day)
+
+        yesterday = today - datetime.timedelta(1)
+        yesterday = datetime.datetime(yesterday.year, yesterday.month, yesterday.day)
+
+        print('SA:', today)
+        print('SA:', yesterday)
+
+        cursor.execute('select Symbol, SentimentScore, Timestamp from TweetsSearched WITH (NOLOCK) WHERE Timestamp >= ? AND Timestamp < ?', yesterday, today)
+    else:
+        # else date is today!
+        cursor.execute('select top 500000 Symbol, SentimentScore, Timestamp from TweetsSearched WITH (NOLOCK) ORDER BY myid  DESC')
+    #print('cursor fetchall')
     tweets = cursor.fetchall()
 
-    print('filtering') 
-    yesterday = datetime.date.today() - datetime.timedelta(1)
-    yesterday = datetime.datetime(yesterday.year, yesterday.month, yesterday.day)
+    if sel_date:
+        yesterday = sel_date - datetime.timedelta(1)
+        yesterday = datetime.datetime(yesterday.year, yesterday.month, yesterday.day)
 
-    today = datetime.datetime.today()
-    today = datetime.datetime(today.year, today.month, today.day)
+    if not sel_date:
+        print('filtering')
+        yesterday = datetime.date.today() - datetime.timedelta(1)
+        yesterday = datetime.datetime(yesterday.year, yesterday.month, yesterday.day)
 
-    print('Tweets from ' + str(yesterday))
-    print('Tweets until ' + str(today))
-    # check that everything is OK!
-    if not (tweets[0][-1] > today and tweets[-1][-1]  < yesterday):
-        print('Fetch more tweets!!')
+        today = datetime.datetime.today()
+        today = datetime.datetime(today.year, today.month, today.day)
+
+        print('Tweets from ' + str(yesterday))
+        print('Tweets until ' + str(today))
+        # check that everything is OK!
+        if not (tweets[0][-1] > today and tweets[-1][-1]  < yesterday):
+            print('Fetch more tweets!!')
 
     filtered_tweets = {}
     for t in tweets:
@@ -62,8 +80,8 @@ def sa_scoring_function(sa_feats):
     return score
 
 
-def sa_scores():
-    feats = sa_features()
+def sa_scores(sel_date = None):
+    feats = sa_features(sel_date)
     scores = sa_scoring_function(feats)
     return scores, feats
 
