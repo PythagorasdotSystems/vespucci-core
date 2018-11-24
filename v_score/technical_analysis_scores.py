@@ -6,14 +6,18 @@ import sys
 sys.path.append('..')
 import utils
 
-def ta_features():
+import datetime
+
+def ta_features(sel_date = datetime.date.today()):
        #Connect to Database
        config = utils.tools.ConfigFileParser('../config.yml')
        db=utils.DB(config.database)
        db.connect()
        cursor = db.cnxn.cursor()
 
-       cursor.execute('Select Symbol,Close_value,Date,High,Low,Market_Cap,Open_value,Volume from dbo.cryptoHistory WHERE Date >  DATEADD( DAY, -200, CAST(CAST(GETDATE() AS DATE) AS DATETIME ))')
+       from_date = sel_date - datetime.timedelta(200)
+       #cursor.execute('Select Symbol,Close_value,Date,High,Low,Market_Cap,Open_value,Volume from dbo.cryptoHistory WHERE Date >  DATEADD(DAY, -200, GETDATE())')
+       cursor.execute('Select Symbol,Close_value,Date,High,Low,Market_Cap,Open_value,Volume from dbo.cryptoHistory WHERE Date > ?', from_date)
        R = cursor.fetchall()
        t0 = {}
        for r in R:
@@ -34,7 +38,8 @@ def ta_features():
        	t0[r[0]]['Open'].append(r[6])
        	t0[r[0]]['Volume'].append(r[7])
        return t0
-       
+
+
 def ta_scoring_function(ta_feats):
        scores = {}
        for key in ta_feats.keys():
@@ -43,7 +48,8 @@ def ta_scoring_function(ta_feats):
        	score = IndicatorsScore(df)
        	scores[key] = int(score*100)
        return scores
-       
+
+
 def IndicatorsScore(df):
        Bollinger_Bands( df, []);
        IchimokuKinkoHyo(df,[]);
@@ -83,10 +89,12 @@ def IndicatorsScore(df):
        #print(score2)
        return score.iloc[0]
 
-def ta_scores():
-    feats = ta_features()
+
+def ta_scores(sel_date = datetime.date.today()):
+    feats = ta_features(sel_date)
     scores = ta_scoring_function(feats)
     return scores, feats
+
 
 if __name__== '__main__':
     scores, feats = ta_scores()
