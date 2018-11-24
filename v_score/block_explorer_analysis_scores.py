@@ -2,102 +2,113 @@ import sys
 sys.path.append('..')
 import utils
 
+import datetime
+
 
 #def max_from_list_of_lists(l, pos = 0):
 #    return max([i[pos] for i in l if i[pos] is not None])
 
-def max_from_list(l):
-    return max([i for i in l if i is not None])
+#def max_from_list(l):
+#    return max([i for i in l if i is not None])
 
 #def divide_list_by_max(l, pos = 0):
 #    return list(map(lambda x: (0 if x is None else x) / max_from_list_of_lists(l,pos), [i[pos] for i in l]))
 
-def divide_dict_by_max(d, pos):
-    max_value = max_from_list([v[pos] for v in d.values()])
+#def divide_dict_by_max(d, pos):
+#    print(pos)
+#    max_value = max_from_list([v[pos] for v in d.values()  if (len(v) >=5)  ])
+#    print(max_value)
+#    results = {}
+#    for k, v in d.items():
+#        #print(v[pos])
+#        if max_value != 0 and len(v) >=5 and v[pos] != None:
+#            results[k] = v[pos] / max_value
+#        else:
+#            results[k] = 0
+#    return results
+
+
+def divide_dict_by_max(d, feat_name):
+    #print(d)
+    max_value = max([x[feat_name] for x in d.values() if feat_name in x and x[feat_name] is not None])
     #print(max_value)
     results = {}
     for k, v in d.items():
-        #print(v[pos])
-        if max_value != 0 and v[pos] != None:
-            results[k] = v[pos] / max_value
+        if max_value != 0 and feat_name in v and v[feat_name] is not None:
+            results[k] = v[feat_name] / max_value
         else:
             results[k] = 0
+        #print(k,results[k])
     return results
 
 
-def find_description_position(description, feature_name):
-    return [i for i,x in enumerate([d[0] for d in description]) if x == feature_name][0]
+#def find_description_position(description, feature_name):
+#    return [i for i,x in enumerate([d[0] for d in description]) if x == feature_name][0]
 
 
-# Block Explorer Analysis features
-def bea_features(db = None):
-    if not db:
-        #db = DB()
-        config = utils.tools.ConfigFileParser('../config.yml')
-        db=utils.DB(config.database)
+def select_bea_by_date(sel_date):
+    sel_date = datetime.datetime(sel_date.year, sel_date.month, sel_date.day)
+    prev_sel_date = sel_date - datetime.timedelta(1)
+    #print(sel_date)
+    #print(prev_sel_date)
+
+    config = utils.tools.ConfigFileParser('../config.yml')
+    db=utils.DB(config.database)
     db.connect()
     cursor = db.cnxn.cursor()
 
-    cursor.execute('select * from FtaCoinMetrics where CM_Timestamp >=  DATEADD( DAY, -2, CAST(CAST(GETDATE() AS DATE) AS DATETIME) ) AND CM_Timestamp <  DATEADD( DAY, -1, CAST(CAST(GETDATE() AS DATE) AS DATETIME) )')
+    cursor.execute('select Symbol, blockcount, txcount, medianfee, activeaddresses from FtaCoinMetrics where CM_Timestamp >= ?  AND CM_Timestamp < ?', prev_sel_date, sel_date)
     R = cursor.fetchall()
-    pos = find_description_position(cursor.description, 'Symbol')
-    t0 = {}
+    #pos = find_description_position(cursor.description, 'Symbol')
+    d = {}
     for r in R:
-        t0[r[pos]] = list(r)
+        #d[r[pos]] = list(r)
+        if r[0] not in d:
+            d[r[0]] = {}
+        d[r[0]]['blockcount'] = r[1]
+        d[r[0]]['txcount'] = r[2]
+        d[r[0]]['medianfee'] = r[3]
+        d[r[0]]['activeaddresses'] = r[4]
 
-    print('BEA feats:: t0 length ', len(t0))
-    #print(t0)
+    print('BEA feats:: length ', len(R))
 
-    cursor.execute('select * from FtaCoinMetrics where CM_Timestamp >=  DATEADD( DAY, -1, CAST(CAST(GETDATE() AS DATE) AS DATETIME) ) AND CM_Timestamp <  DATEADD( DAY, -0, CAST(CAST(GETDATE() AS DATE) AS DATETIME) )')
+    cursor.execute('select Symbol, NetHashesPerSecond from FtaCryptoCompare where LastBlockExplorerUpdateTS >= ? AND LastBlockExplorerUpdateTS <  ?', prev_sel_date, sel_date)
     R = cursor.fetchall()
-    pos = find_description_position(cursor.description, 'Symbol')
-    t1 = {}
     for r in R:
-        t1[r[pos]] = list(r)
+        if r[0] not in d:
+            d[r[0]] = {}
+        d[r[0]]['NetHashesPerSecond'] = r[1]
 
-    print('BEA feats:: t1 length ', len(t1))
-    #print(t1)
+    #for i in d:
+    #    print(i,len(d[i]))
+    #    print(i, d[i])
 
-    # get position of symbol
-    pos = find_description_position(cursor.description, 'Symbol')
-    #descr = []
+    return d
+
+# Block Explorer Analysis features
+def bea_features(sel_date = datetime.date.today(), db = None):
+
+    prev_sel_date = sel_date - datetime.timedelta(1)
+    t0 = select_bea_by_date(prev_sel_date)
+    t1 = select_bea_by_date(sel_date)
 
     block_feats = {}
-    #for i in range(len(t1)):
-    #    descr.append(t1[i][pos])
-    #    block_feats[t1[i][pos]] = {}
-    ##block_feats['symbol'] = (descr)
     for coin in t1:
         block_feats[coin] = {}
 
-    # get position of feature
-    pos = find_description_position(cursor.description, 'blockcount')
-    #block_feats['blockcount'] = divide_list_by_max(t1, pos)
-    #for i, v in enumerate(divide_list_by_max(t1, pos)):
-    #    block_feats[descr[i]]['blockcount'] = v
-    for coin, v in divide_dict_by_max(t1, pos).items():
+    for coin, v in divide_dict_by_max(t1, 'blockcount').items():
         block_feats[coin]['blockcount'] = v
-    #print(block_feats.items())
 
-    # get position of feature
-    pos = find_description_position(cursor.description, 'txcount')
-    #block_feats['txcount'] = divide_list_by_max(t1, pos)
-    #for i, v in enumerate(divide_list_by_max(t1, pos)):
-    #    block_feats[descr[i]]['txcount'] = v
-    for coin, v in divide_dict_by_max(t1, pos).items():
+    for coin, v in divide_dict_by_max(t1, 'txcount').items():
         block_feats[coin]['txcount'] = v
-    #print(block_feats.items())
 
-    # get positions of features
-    pos_medianfee = find_description_position(cursor.description, 'medianfee')
-    pos_activeaddresses = find_description_position(cursor.description, 'activeaddresses')
-    #medianfee = []
-    #activeaddresses = []
-    #for i in range(len(t0) if len(t0) < len(t1) else len(t1)):
     for coin in t1:
-        if coin in t0 and t0[coin][pos_medianfee] and t1[coin][pos_medianfee]:
+        if coin not in t0:
+            continue
+
+        if 'medianfee' in t0 and t0[coin]['medianfee'] and 'medianfee' in t1 and t1[coin]['medianfee']:
         #if (t0[i][pos_medianfee] and t1[i][pos_medianfee]):
-            if (t1[coin][pos_medianfee] <= t0[coin][pos_medianfee]):
+            if (t1[coin]['medianfee'] <= t0[coin]['medianfee']):
                 #medianfee.append(1)
                 block_feats[coin]['medianfee'] = 1
             else:
@@ -107,46 +118,17 @@ def bea_features(db = None):
             #medianfee.append(0)
             block_feats[coin]['medianfee'] = 0
 
-        if coin in t0 and t0[coin][pos_activeaddresses] and t1[coin][pos_activeaddresses]:
-            if (t1[coin][pos_activeaddresses] >= t0[coin][pos_activeaddresses]):
-                #activeaddresses.append(1)
+        if 'activeaddresses' in t0 and t0[coin]['activeaddresses'] and 'activeaddresses' in t1 and t1[coin]['activeaddresses']:
+            if (t1[coin]['activeaddresses'] >= t0[coin]['activeaddresses']):
                 block_feats[coin]['activeaddresses'] = 1
             else:
-                #activeaddresses.append(0)
                 block_feats[coin]['activeaddresses'] = 0
         else:
-            #activeaddresses.append(0)
             block_feats[coin]['activeaddresses'] = 0
 
-    #block_feats['medianfee'] = medianfee
-    #block_feats['activeaddresses'] = activeaddresses
 
-    cursor.execute('select * from FtaCryptoCompare where LastBlockExplorerUpdateTS >=  DATEADD( DAY, -1, CAST(CAST(GETDATE() AS DATE) AS DATETIME) ) AND LastBlockExplorerUpdateTS <  DATEADD( DAY, -0, CAST(CAST(GETDATE() AS DATE) AS DATETIME) )')
-    #t1 = cursor.fetchall()
-    R = cursor.fetchall()
-    pos = find_description_position(cursor.description, 'Symbol')
-    t1 = {}
-    for r in R:
-        t1[r[pos]] = list(r)
-
-
-    #descr = []
-    #pos = find_description_position(cursor.description, 'Symbol')
-    #for i in range(len(t1)):
-    #    descr.append(t1[i][pos])
-
-    pos = find_description_position(cursor.description, 'NetHashesPerSecond')
-    #block_feats['hashrate'] = divide_list_by_max(t1, pos)
-    #for i, v in enumerate(divide_list_by_max(t1, pos)):
-    #    if descr[i] not in block_feats.keys():
-    #        block_feats[descr[i]] = {}
-    #    block_feats[descr[i]]['hashrate'] = v
-
-    for coin, v in divide_dict_by_max(t1, pos).items():
-        if coin not in block_feats:
-            block_feats[coin] = {}
+    for coin, v in divide_dict_by_max(t1, 'NetHashesPerSecond').items():
         block_feats[coin]['hashrate'] = v
-    #print(block_feats.items())
 
     return block_feats
 
@@ -169,8 +151,8 @@ def bea_scoring_function(block_feats):
     return score
 
 
-def bea_scores():
-    feats = bea_features()
+def bea_scores(sel_date = datetime.date.today()):
+    feats = bea_features(sel_date)
     scores = bea_scoring_function(feats)
     return scores, feats
 
