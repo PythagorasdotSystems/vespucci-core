@@ -4,7 +4,13 @@ import utils
 
 import datetime
 
-def select_da_by_date(cursor, sel_date):
+def select_da_by_date(sel_date):
+
+    config = utils.tools.ConfigFileParser('../config.yml')
+    db=utils.DB(config.database)
+    db.connect()
+    cursor = db.cnxn.cursor()
+
     sel_date = datetime.datetime(sel_date.year, sel_date.month, sel_date.day)
     prev_sel_date = sel_date - datetime.timedelta(1)
 
@@ -72,13 +78,7 @@ def compute_da_scores(t0, t1):
 
 
 # Developer Analysis features
-def da_features(sel_date = datetime.date.today(), db = None):
-    if not db:
-        #db = DB()
-        config = utils.tools.ConfigFileParser('../config.yml')
-        db=utils.DB(config.database)
-    db.connect()
-    cursor = db.cnxn.cursor()
+def da_features(sel_date = datetime.date.today()):
     print(sel_date)
     #cursor.execute('select Symbol, forks, stars, subscribers, total_issues, closed_issues, pull_requests_merged, pull_request_contributors, commit_count_4_weeks from FtaDeveloper where last_updated >=  DATEADD(DAY, -3, GETDATE()) AND last_updated <  DATEADD(DAY, -2, GETDATE())')
     #R = cursor.fetchall()
@@ -114,8 +114,8 @@ def da_features(sel_date = datetime.date.today(), db = None):
 
 
     prev_sel_date = sel_date - datetime.timedelta(1)
-    t0 = select_da_by_date(cursor, prev_sel_date)
-    t1 = select_da_by_date(cursor, sel_date)
+    t0 = select_da_by_date(prev_sel_date)
+    t1 = select_da_by_date(sel_date)
 
     #da_feats = {}
     #for coin in t1:
