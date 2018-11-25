@@ -12,13 +12,13 @@ from . import expert_analysis_scores
 from . import block_explorer_analysis_scores
 
 # Scoring Function to combine all scores
-def scoring_function():
+def scoring_function(sel_date = datetime.date.today()):
 
     total_analysis = {}
 
     # Block Explorer Analysis
 
-    bea_scores, bea_feats = block_explorer_analysis_scores.bea_scores()
+    bea_scores, bea_feats = block_explorer_analysis_scores.bea_scores(sel_date)
     # change keys to lowercase
     bea_scores = {(k.lower()).strip(): v for k, v in bea_scores.items()}
     bea_feats = {(k.lower)().strip(): v for k, v in bea_feats.items()}
@@ -41,7 +41,7 @@ def scoring_function():
 
     # Sentiment Analysis
 
-    sa_scores, sa_feats = sentiment_analysis_scores.sa_scores()
+    sa_scores, sa_feats = sentiment_analysis_scores.sa_scores(sel_date)
     # change keys to lowercase
     sa_scores = {(k.lower()).strip(): v for k, v in sa_scores.items()}
     sa_feats = {(k.lower)().strip(): v for k, v in sa_feats.items()}
@@ -54,7 +54,7 @@ def scoring_function():
 
     # Developer Analysis
 
-    da_scores, da_feats = developer_analysis_scores.da_scores()
+    da_scores, da_feats = developer_analysis_scores.da_scores(sel_date)
     # change keys to lowercase
     da_scores = {(k.lower()).strip(): v for k, v in da_scores.items()}
     da_feats = {(k.lower)().strip(): v for k, v in da_feats.items()}
@@ -64,7 +64,7 @@ def scoring_function():
 
     # Technical Analysis
 
-    ta_scores, ta_feats = technical_analysis_scores.ta_scores()
+    ta_scores, ta_feats = technical_analysis_scores.ta_scores(sel_date)
     # change keys to lowercase
     ta_scores = {(k.lower()).strip(): v for k, v in ta_scores.items()}
     ta_feats = {(k.lower)().strip(): v for k, v in ta_feats.items()}
