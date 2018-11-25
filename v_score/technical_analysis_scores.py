@@ -16,8 +16,9 @@ def ta_features(sel_date = datetime.date.today()):
        cursor = db.cnxn.cursor()
 
        from_date = sel_date - datetime.timedelta(200)
+       to_date = sel_date - datetime.timedelta(1)
        #cursor.execute('Select Symbol,Close_value,Date,High,Low,Market_Cap,Open_value,Volume from dbo.cryptoHistory WHERE Date >  DATEADD(DAY, -200, GETDATE())')
-       cursor.execute('Select Symbol,Close_value,Date,High,Low,Market_Cap,Open_value,Volume from dbo.cryptoHistory WHERE Date > ?', from_date)
+       cursor.execute('Select Symbol,Close_value,Date,High,Low,Market_Cap,Open_value,Volume from dbo.cryptoHistory WHERE Date > ? AND DATE <= ?', from_date, to_date)
        R = cursor.fetchall()
        t0 = {}
        for r in R:
@@ -41,13 +42,14 @@ def ta_features(sel_date = datetime.date.today()):
 
 
 def ta_scoring_function(ta_feats):
-       scores = {}
-       for key in ta_feats.keys():
+    scores = {}
+    for key in ta_feats.keys():
         #print(key)
-       	df = pd.DataFrame.from_dict(ta_feats[key],orient='index').transpose()
-       	score = IndicatorsScore(df)
-       	scores[key] = int(score*100)
-       return scores
+        df = pd.DataFrame.from_dict(ta_feats[key],orient='index').transpose()
+        score, indicators_scores = IndicatorsScore(df)
+        # why int? ie when score = 0.915 it becomes 91%
+        scores[key] = int(score*100)
+    return scores
 
 
 def IndicatorsScore(df):
@@ -87,7 +89,8 @@ def IndicatorsScore(df):
        score2['final_score'] = np.where(score2['5indicators'] > 3,(0.5*score2['5indicators']/5.0 + 0.5*score2['macd_score']),0.5*score2['macd_score'])
        score = score2['final_score'][len(score2)-1:len(score2)]
        #print(score2)
-       return score.iloc[0]
+       #print(score)
+       return score.iloc[0], score2
 
 
 def ta_scores(sel_date = datetime.date.today()):
