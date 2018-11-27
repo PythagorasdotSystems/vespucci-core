@@ -113,9 +113,8 @@ def coinGecko_list_update(coin_list):
     return response
 
 
-def db_developer(coin_features, db = None):
-    if not db:
-        db = DB()
+def db_developer(coin_features):
+    db = DB()
     db.connect()
 
     #coin_features = coinGecko_list_update(coin_features)
@@ -153,9 +152,8 @@ def db_developer(coin_features, db = None):
     db.disconnect()
 
 
-def db_cryptocompare(coin_features, db = None):
-    if not db:
-        db = DB()
+def db_cryptocompare(coin_features):
+    db = DB()
     db.connect()
 
     for coin in coin_features:
@@ -195,9 +193,8 @@ def db_cryptocompare(coin_features, db = None):
         db.cnxn.commit()
 
 
-def db_coinmetrics(coin_features, db = None):
-    if not db:
-        db = DB()
+def db_coinmetrics(coin_features):
+    db = DB()
     db.connect()
 
     r = {}
