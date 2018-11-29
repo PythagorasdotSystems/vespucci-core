@@ -12,6 +12,11 @@ from . import block_explorer_analysis_scores
 # Scoring Function to combine all scores
 def scoring_function(sel_date = datetime.date.today()):
 
+    # Vespucci coin list
+    coin_list = utils.tools.vespucci_coin_list()
+    coin_list =[coin['Symbol'].lower() for coin in coin_list]
+
+
     total_analysis = {}
 
     # Block Explorer Analysis
@@ -84,7 +89,10 @@ def scoring_function(sel_date = datetime.date.today()):
     total_scores['fta'] = {}
     total_scores['ta'] = {}
     total_scores['sa'] = {}
-    for coin in bea_scores:
+    for coin in coin_list:
+        if coin not in bea_scores:
+            print(coin.upper(), ' not in BEA!!')
+            bea_scores[coin] = 0
         # if coin does not have developer analysis scores
         if coin not in da_scores.keys():
             print(coin.upper(), ' not in DA!!')

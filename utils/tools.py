@@ -77,3 +77,19 @@ class DB:
 
     def disconnect(self):
         self.cnxn.close()
+
+
+# Vespucci
+#----------------------------------------------------
+def vespucci_coin_list():
+    config = ConfigFileParser('../config.yml')
+    db = DB(config.database)
+    db.connect()
+    cursor = db.cnxn.cursor()
+    cursor.execute('select Symbol,Name,WebsiteSlug from Coins')
+    rows = cursor.fetchall()
+    coins = []
+    for r in rows:
+        coins.append({'Symbol':r[0], 'Name':r[1], 'WebsiteSlug':r[2]})
+    return coins
+

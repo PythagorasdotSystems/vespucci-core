@@ -28,21 +28,70 @@ import datetime
 
 def divide_dict_by_max(d, feat_name):
     #print(d)
-    max_value = max([x[feat_name] for x in d.values() if feat_name in x and x[feat_name] is not None])
-    #print(max_value)
+    L=[x[feat_name] for x in d.values() if feat_name in x and x[feat_name] is not None]
+    max_value=max(L) if L else 0
+
     results = {}
     for k, v in d.items():
         if max_value != 0 and feat_name in v and v[feat_name] is not None:
             results[k] = v[feat_name] / max_value
         else:
             results[k] = 0
-        #print(k,results[k])
     return results
 
 
 #def find_description_position(description, feature_name):
 #    return [i for i,x in enumerate([d[0] for d in description]) if x == feature_name][0]
 
+
+def select_coin_bea_by_date(coin, sel_date = datetime.date.today()):
+    from_date = datetime.datetime(sel_date.year, sel_date.month, sel_date.day)
+    until_date = sel_date - datetime.timedelta(10)
+
+    config = utils.tools.ConfigFileParser('../config.yml')
+    db=utils.DB(config.database)
+    db.connect()
+    cursor = db.cnxn.cursor()
+
+    # fetch the two newest for the specified date range
+    cursor.execute('SELECT TOP 2 Symbol, blockcount, txcount, medianfee, activeaddresses, CM_Timestamp FROM FtaCoinMetrics WHERE Symbol = ? AND CM_Timestamp >= ?  AND CM_Timestamp < ? ORDER BY CM_Timestamp desc', coin, until_date, from_date)
+    R = cursor.fetchall()
+
+    T = []
+    if len(R) != 2:
+        print('Only', len(R), 'BEA features for', coin, 'at', sel_date,'.')
+        #return None
+    else:
+        for r in R:
+            d = {}
+            d[r[0]] = {}
+            d[r[0]]['blockcount'] = r[1]
+            d[r[0]]['txcount'] = r[2]
+            d[r[0]]['medianfee'] = r[3]
+            d[r[0]]['activeaddresses'] = r[4]
+            d[r[0]]['CM_Timestamp'] = r[5]
+            T.append(d)
+
+    # reverse to have older date first
+    T = T[::-1]
+
+    cursor.execute('SELECT TOP 1 Symbol, NetHashesPerSecond, LastBlockExplorerUpdateTS FROM FtaCryptoCompare WHERE Symbol = ? AND LastBlockExplorerUpdateTS >= ? AND LastBlockExplorerUpdateTS <  ? ORDER BY LastBlockExplorerUpdateTS desc', coin, until_date, from_date)
+    R = cursor.fetchall()
+    if R:
+        r = R[0]
+
+        if not len(T):
+            d = {}
+            d[r[0]] = {}
+            d[r[0]]['NetHashesPerSecond'] = r[1]
+            T = [d]
+            #print(T)
+            #return T
+        else:
+            T[1][r[0]]['NetHashesPerSecond'] = r[1]
+
+    #return T[0], T[1]
+    return T
 
 def select_bea_by_date(sel_date):
     sel_date = datetime.datetime(sel_date.year, sel_date.month, sel_date.day)
@@ -77,19 +126,38 @@ def select_bea_by_date(sel_date):
             d[r[0]] = {}
         d[r[0]]['NetHashesPerSecond'] = r[1]
 
-    #for i in d:
-    #    print(i,len(d[i]))
-    #    print(i, d[i])
-
     return d
 
 # Block Explorer Analysis features
-def bea_features(sel_date = datetime.date.today(), db = None):
+def bea_features(sel_date = datetime.date.today(), coin_list = None):
 
-    prev_sel_date = sel_date - datetime.timedelta(1)
-    t0 = select_bea_by_date(prev_sel_date)
-    t1 = select_bea_by_date(sel_date)
+    #prev_sel_date = sel_date - datetime.timedelta(1)
+    #t0 = select_bea_by_date(prev_sel_date)
+    #t1 = select_bea_by_date(sel_date)
 
+    if not coin_list:
+        coin_list = utils.tools.vespucci_coin_list()
+        coin_list =[coin['Symbol'].lower() for coin in coin_list]
+
+    t0 = {}
+    t1 = {}
+    for coin in coin_list:
+        R = select_coin_bea_by_date(coin, sel_date)
+        if len(R) == 1:
+            t1.update(R[0])
+        elif len(R) == 2:
+            t0.update(R[0])
+            t1.update(R[1])
+
+    print('BEA feats t0:: length ', len(t0))
+    print('BEA feats t1:: length ', len(t1))
+
+    block_feats = compute_bea_scores(t0, t1)
+
+    return block_feats
+
+
+def compute_bea_scores(t0, t1):
     block_feats = {}
     for coin in t1:
         block_feats[coin] = {}
@@ -124,7 +192,6 @@ def bea_features(sel_date = datetime.date.today(), db = None):
         else:
             block_feats[coin]['activeaddresses'] = 0
 
-
     for coin, v in divide_dict_by_max(t1, 'NetHashesPerSecond').items():
         block_feats[coin]['hashrate'] = v
 
@@ -149,8 +216,8 @@ def bea_scoring_function(block_feats):
     return score
 
 
-def bea_scores(sel_date = datetime.date.today()):
-    feats = bea_features(sel_date)
+def bea_scores(sel_date = datetime.date.today(), coin_list = None):
+    feats = bea_features(sel_date, coin_list)
     scores = bea_scoring_function(feats)
     return scores, feats
 
