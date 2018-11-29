@@ -1,10 +1,16 @@
 ### Requirements
 
 ```
+# Technical Analysis Library in Python https://github.com/bukosabino/ta
+pip install ta
+
 pip3 install crycompare
-# pycoingecko and coinmetrics must be cloned in the root folder of the project
+
+# pycoingecko
 git clone https://github.com/man-c/pycoingecko.git
 python3 setup.py install
+
+# coinmetrics
 git clone https://github.com/man-c/coinmetrics.git
 python3 setup.py install
 ```
