@@ -19,28 +19,46 @@ def fta_features():
 
     logger.info('Starting (Update FTA feats and compute score')
 
+    # Vespucci coin list
+    coin_list = utils.tools.vespucci_coin_list()
+    coin_list =[coin['Symbol'].lower() for coin in coin_list]
+
     # init APIs
     cg = pycoingecko.CoinGeckoAPI()
     cm = coinmetrics.CoinMetricsAPI()
 
     logger.info('Get FTA feats')
 
+
     # CoinMetrics API
+    ##cm_supported_assets = cm.get_supported_assets()
     #cm_supported_assets = cm.get_supported_assets()
+    #cm_supported_assets = ['vet' if coin=='ven' else coin for coin in cm_supported_assets]
+
+    #cm_coins_features = cm.get_all_data_types_for_all_assets()
+    #cm_coins_features['vet'] = cm_coins_features.pop('ven')
+
     cm_supported_assets = cm.get_supported_assets()
     cm_supported_assets = ['vet' if coin=='ven' else coin for coin in cm_supported_assets]
-
-    cm_coins_features = cm.get_all_data_types_for_all_assets()
+    #cm_coins_features = cm.get_all_data_types_for_assets( ['ven' if coin['Symbol'].lower() == 'vet' else coin['Symbol'].lower() for coin in coin_list if coin['Symbol'].lower() in cm_supported_assets] )
+    cm_coins_features = cm.get_all_data_types_for_assets(['ven' if coin.lower() == 'vet' else coin.lower() for coin in coin_list if coin.lower() in cm_supported_assets])
     cm_coins_features['vet'] = cm_coins_features.pop('ven')
 
+
     # CryptoCompare API
-    coins_block_features = block_features(cm_supported_assets)
-    coins_social_features = social_features(cm_supported_assets)
+    #coins_block_features = block_features(cm_supported_assets)
+    #coins_social_features = social_features(cm_supported_assets)
+
+    coins_block_features = block_features(coin_list)
+    coins_social_features = social_features(coin_list)
+
 
     # CoinGecko API
-    coins_dev_features = coinGecko_developer_update(cg, cm_supported_assets, cg.get_coins_list())
-    coins_dev_features = coinGecko_list_update(coins_dev_features)
+    #coins_dev_features = coinGecko_developer_update(cg, cm_supported_assets, cg.get_coins_list())
+    #coins_dev_features = coinGecko_list_update(coins_dev_features)
 
+    coins_dev_features = coinGecko_developer_update(cg, coin_list, cg.get_coins_list())
+    coins_dev_features = coinGecko_list_update(coins_dev_features)
 
     return cm_coins_features, coins_block_features, coins_dev_features, coins_social_features
 
@@ -79,9 +97,10 @@ def coinGecko_developer_update(cg, cm_assets, cg_list):
                 continue
 
             if coin['symbol'] in coin_seen:
+                print('---Dupicates (same symbol)---')
                 print(coin['symbol'])
                 print(coin['id'])
-                print('---OLD---')
+                print('---was---')
                 print(coin_seen[coin['symbol']])
                 print('------------------------\n')
                 continue
@@ -113,9 +132,8 @@ def coinGecko_list_update(coin_list):
     return response
 
 
-def db_developer(coin_features, db = None):
-    if not db:
-        db = DB()
+def db_developer(coin_features):
+    db = DB()
     db.connect()
 
     #coin_features = coinGecko_list_update(coin_features)
@@ -153,9 +171,8 @@ def db_developer(coin_features, db = None):
     db.disconnect()
 
 
-def db_cryptocompare(coin_features, db = None):
-    if not db:
-        db = DB()
+def db_cryptocompare(coin_features):
+    db = DB()
     db.connect()
 
     for coin in coin_features:
@@ -195,9 +212,8 @@ def db_cryptocompare(coin_features, db = None):
         db.cnxn.commit()
 
 
-def db_coinmetrics(coin_features, db = None):
-    if not db:
-        db = DB()
+def db_coinmetrics(coin_features):
+    db = DB()
     db.connect()
 
     r = {}

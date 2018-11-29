@@ -11,7 +11,7 @@ import math
 
 import utils
 
-def write_to_database(df):
+def update_ta_db(df):
     #Database Connection
     config = utils.tools.ConfigFileParser('../config.yml')
     db=utils.DB(config.database)
@@ -38,7 +38,7 @@ def write_to_database(df):
     db.disconnect()
     #print(df)
 
-def save_crypto_coins_history(i_from_date=None, i_to_date=None,i_coin_markets=[]):
+def ta_features(i_from_date=None, i_to_date=None,i_coin_markets=[]):
     """
     :param str 'YYYY-MM-DD' i_from_date: pull data from this date [includes]
     :param str 'YYYY-MM-DD' i_to_date: pull data till this date [includes]
@@ -66,10 +66,7 @@ def save_crypto_coins_history(i_from_date=None, i_to_date=None,i_coin_markets=[]
     df_coins2 = df_coins[::-1]
     #print(df_coins2)
     return df_coins2
-    #write_to_database(df_coins2);
 
-
-    #write_to_database(df)
 
 def get_coins_from_database():
     """
@@ -234,14 +231,14 @@ def waitToTomorrow():
     print(delta.seconds)
     time.sleep(delta.seconds)
 
-#save_crypto_coins_history('2018-11-10','2018-11-17')
+#ta_features('2018-11-10','2018-11-17')
 def daily_update():
     yesterday = date.today() - timedelta(1)
     str_yesterday = yesterday.strftime('%Y-%m-%d')
-    df_coins = save_crypto_coins_history(str_yesterday)
-    write_to_database(df_coins);
+    df_coins = ta_features(str_yesterday)
+    update_ta_db(df_coins);
 
-#daily_update()
+
 if __name__ == "__main__":
-    df_coins = save_crypto_coins_history('2010-01-01')
-    #write_to_database(df_coins);
+    df_coins = ta_features('2010-01-01')
+

@@ -12,13 +12,6 @@ import math
 
 from datetime import datetime
 
-# Load data
-#df = pd.read_csv('ta/data/datas.csv', sep=',')
-
-#df = pd.read_csv('results/litecoin.csv', sep=',')
-#df = utils.dropna(df)
-
-#print(df.columns)
 
 # Bollinger Bands
 def ema(series, periods):
