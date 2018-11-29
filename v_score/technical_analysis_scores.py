@@ -20,6 +20,14 @@ def ta_features(sel_date = datetime.date.today()):
        #cursor.execute('Select Symbol,Close_value,Date,High,Low,Market_Cap,Open_value,Volume from dbo.cryptoHistory WHERE Date >  DATEADD(DAY, -200, GETDATE())')
        cursor.execute('Select Symbol,Close_value,Date,High,Low,Market_Cap,Open_value,Volume from dbo.cryptoHistory WHERE Date > ? AND DATE <= ?', from_date, to_date)
        R = cursor.fetchall()
+
+       # TMP fix for trailing spaces in DB table
+       # some str values (ie Symbol, Market_Cap, Volume) need to be reapplied to DB table after field type changed to remove trailing spaces
+       for r in R:
+           r[0]=r[0].strip()
+           r[5]=r[5].strip()
+           r[7]=r[7].strip()
+
        t0 = {}
        for r in R:
        	if r[0] not in t0:
