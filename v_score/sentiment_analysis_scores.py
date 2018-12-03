@@ -48,15 +48,22 @@ def sa_features(sel_date = datetime.date.today()):
 
     filtered_tweets = {}
     for t in tweets:
-        if t[-1] >= yesterday and t[-1] < today and (float(t[1]) < -0.5 or float(t[1]) > +0.5 ):
+        if t[-1] >= yesterday and t[-1] < today:# and (float(t[1]) < -0.5 or float(t[1]) > +0.5 ):
             if t[0].lower() not in filtered_tweets:
                 filtered_tweets[t[0].lower()] = {}
                 filtered_tweets[t[0].lower()]['twitter'] = {}
                 filtered_tweets[t[0].lower()]['twitter']['total_score'] = 0
                 filtered_tweets[t[0].lower()]['twitter']['num_of_tweets'] = 0
-            # increase sum and number of tweets
-            filtered_tweets[t[0].lower()]['twitter']['total_score'] += float(t[1])
-            filtered_tweets[t[0].lower()]['twitter']['num_of_tweets'] += 1
+                filtered_tweets[t[0].lower()]['twitter']['num_of_total_tweets'] = 0
+
+            # filter "neutral" tweets
+            if (float(t[1]) < -0.5 or float(t[1]) > +0.5 ):
+                # increase sum and number of tweets
+                filtered_tweets[t[0].lower()]['twitter']['total_score'] += float(t[1])
+                filtered_tweets[t[0].lower()]['twitter']['num_of_tweets'] += 1
+
+            # count total number of tweets (with "neutrals")
+            filtered_tweets[t[0].lower()]['twitter']['num_of_total_tweets'] += 1
     
     for coin in filtered_tweets:
         if filtered_tweets[coin]['twitter']['num_of_tweets'] > 0:
