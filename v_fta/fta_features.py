@@ -147,7 +147,7 @@ def db_developer(coin_features):
 
         Values = []
 
-        db_query = 'INSERT INTO FtaDeveloper ('
+        db_query = 'INSERT INTO FtaGit ('
 
         db_query += ' Symbol'
         Values.append(coin['symbol'])
@@ -223,6 +223,8 @@ def db_coinmetrics(coin_features):
     for coin in coin_features:
         r[coin] = {}
         for feat in coin_features[coin]:
+            # TODO change that to: if feat in db
+            if feat=='reward' or feat=='realizedcap(usd)': continue
             for feat_ts in coin_features[coin][feat]:
                 if feat_ts[0] not in r[coin].keys():
                     r[coin][feat_ts[0]] = {}
@@ -262,7 +264,7 @@ def db_coinmetrics(coin_features):
 
 
 def coinGeckoHistoricalDeveloper(coin_list, from_date, until_date = datetime.date.today().strftime('%d-%m-%Y')):
-    cg = CoinGeckoAPI()
+    cg = pycoingecko.CoinGeckoAPI()
 
     date = datetime.datetime.strptime(from_date, '%d-%m-%Y').date()
     until_date = datetime.datetime.strptime(until_date, '%d-%m-%Y').date()
