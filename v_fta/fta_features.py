@@ -167,8 +167,14 @@ def db_developer(coin_features):
 
         #print(db_query)
         #print(Values)
-        db.cnxn.execute(db_query, tuple(Values))
-        db.cnxn.commit()
+        try:
+            db.cnxn.execute(db_query, tuple(Values))
+            db.cnxn.commit()
+        except:
+            coin['symbol']
+            print(db_query)
+            print(Values)
+            raise
 
     db.disconnect()
 
@@ -210,8 +216,14 @@ def db_cryptocompare(coin_features):
 
         #print(db_query)
         #print(Values)
-        db.cnxn.execute(db_query, tuple(Values))
-        db.cnxn.commit()
+        try:
+            db.cnxn.execute(db_query, tuple(Values))
+            db.cnxn.commit()
+        except:
+            print(coin)
+            print(db_query)
+            print(Values)
+            raise
 
 
 def db_coinmetrics(coin_features):
@@ -255,8 +267,14 @@ def db_coinmetrics(coin_features):
 
             #print(db_query)
             #print(Values)
-            db.cnxn.execute(db_query, tuple(Values))
-            db.cnxn.commit()
+            try:
+                db.cnxn.execute(db_query, tuple(Values))
+                db.cnxn.commit()
+            except:
+                print(coin, ts)
+                print(db_query)
+                print(tuple(Values))
+                raise
 
     db.disconnect()
 
