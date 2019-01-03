@@ -54,7 +54,7 @@ def select_coin_bea_by_date(coin, sel_date = datetime.date.today()):
     cursor = db.cnxn.cursor()
 
     # fetch the two newest for the specified date range
-    cursor.execute('SELECT TOP 2 Symbol, blockcount, txcount, medianfee, activeaddresses, CM_Timestamp FROM FtaCoinMetrics WHERE Symbol = ? AND CM_Timestamp >= ?  AND CM_Timestamp < ? ORDER BY CM_Timestamp desc', coin, until_date, from_date)
+    cursor.execute('SELECT TOP 2 Symbol, blockcount, txcount, medianfee, activeaddresses, CM_Timestamp FROM FtaCoinmetrics WHERE Symbol = ? AND CM_Timestamp >= ?  AND CM_Timestamp < ? ORDER BY CM_Timestamp desc', coin, until_date, from_date)
     R = cursor.fetchall()
 
     T = []
@@ -104,7 +104,7 @@ def select_bea_by_date(sel_date):
     db.connect()
     cursor = db.cnxn.cursor()
 
-    cursor.execute('select Symbol, blockcount, txcount, medianfee, activeaddresses from FtaCoinMetrics where CM_Timestamp >= ?  AND CM_Timestamp < ?', prev_sel_date, sel_date)
+    cursor.execute('SELECT Symbol, blockcount, txcount, medianfee, activeaddresses FROM FtaCoinmetrics WHERE CM_Timestamp >= ?  AND CM_Timestamp < ? ORDER BY CM_Timestamp', prev_sel_date, sel_date)
     R = cursor.fetchall()
     #pos = find_description_position(cursor.description, 'Symbol')
     d = {}
@@ -119,7 +119,7 @@ def select_bea_by_date(sel_date):
 
     print('BEA feats:: length ', len(R))
 
-    cursor.execute('select Symbol, NetHashesPerSecond from FtaCryptoCompare where LastBlockExplorerUpdateTS >= ? AND LastBlockExplorerUpdateTS <  ?', prev_sel_date, sel_date)
+    cursor.execute('SELECT Symbol, NetHashesPerSecond FROM FtaCryptoCompare WHERE LastBlockExplorerUpdateTS >= ? AND LastBlockExplorerUpdateTS <  ?', prev_sel_date, sel_date)
     R = cursor.fetchall()
     for r in R:
         if r[0] not in d:
