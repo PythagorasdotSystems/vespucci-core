@@ -95,6 +95,8 @@ def coinGecko_developer_update(cg, cm_assets, cg_list):
                 continue
             if coin['symbol'].lower() == 'pax' and coin['id'].lower() != 'paxos-standard':
                 continue
+            if coin['symbol'].lower() == 'fun' and coin['id'].lower() != 'funfair':
+                continue
 
             if coin['symbol'] in coin_seen:
                 print('---Dupicates (same symbol)---')
