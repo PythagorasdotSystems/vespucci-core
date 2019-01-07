@@ -24,9 +24,9 @@ def select_coin_ta_by_date(coin, sel_date = datetime.date.today()):
     R = cursor.fetchall()
 
     if not R:
-        print('No TA features for', coin.upper(), 'at', to_date,'.')
+        print('No TA features for', coin.upper(), 'at', to_date)
     elif len(R)!=200:
-        print('TA features for', coin.upper(), 'at', to_date, 'are', len(R), '.')
+        print('TA features for', coin.upper(), 'at', to_date, 'are', len(R))
 
     # TMP fix for trailing spaces in DB table
     # some str values (ie Symbol, Market_Cap, Volume) need to be reapplied to DB table after field type changed to remove trailing spaces
