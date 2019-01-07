@@ -11,6 +11,10 @@ import math
 
 import utils
 
+# CryptoCompare daily history
+from crycompare import history as h
+
+
 def update_ta_db(df):
     #Database Connection
     config = utils.tools.ConfigFileParser('../config.yml')
@@ -59,7 +63,7 @@ def ta_features(i_from_date=None, i_to_date=None,i_coin_markets=[]):
                 coin = coinNames[2]
                 name = coinNames[1]
                 symbol = coinNames[0]
-                print(coin)
+                #print(coin)
                 df_coins = df_coins.append(get_coins_historical_data(symbol,name,coin, from_date, to_date))
             counter += 1
         time.sleep(90)
@@ -113,7 +117,8 @@ def get_coins_historical_data(i_symbol, i_name, i_coin, i_from_date, i_to_date):
     :param date 'YYYYMMDD' i_to_date: pull data till this date [includes]
     return list: coin history data includes current ranking
     """
-    df_coin = get_specific_coin_historical_data(i_coin, i_from_date, i_to_date)
+    df_coin = get_specific_coin_historical_data_coinmarketcap(i_coin, i_from_date, i_to_date)
+    #df_coin = get_specific_coin_historical_data_cryptocompare(i_symbol, i_from_date, i_to_date)
     #if(df_coin):
     #print(len(df_coin))
     df_coin['Id'] = i_coin
@@ -122,13 +127,16 @@ def get_coins_historical_data(i_symbol, i_name, i_coin, i_from_date, i_to_date):
     df_coin = pd.concat([df_coin.iloc[:,7:], df_coin.iloc[:,0:7]], axis=1, join_axes=[df_coin.index])
     return df_coin
 
-def  get_specific_coin_historical_data(i_coin, i_from_date, i_to_date):
+def  get_specific_coin_historical_data_coinmarketcap(i_coin, i_from_date, i_to_date):
     """
     :param str i_coin: coin name
     :param date 'YYYYMMDD' i_from_date: pull data from this date [includes]
     :param date 'YYYYMMDD' i_to_date: pull data till this date [includes]
     return list: coin history data
     """
+    print(i_coin)
+    #print(i_from_date)
+    #print(i_to_date)
 
     currencies = "https://coinmarketcap.com/currencies/"
     currencies_end = '/historical-data/'
@@ -164,6 +172,57 @@ def  get_specific_coin_historical_data(i_coin, i_from_date, i_to_date):
     except AttributeError as e:
         print('input parameters not valid')
         sys.exit(13)
+    return coin_data
+
+
+def  get_specific_coin_historical_data_cryptocompare(i_symbol, i_from_date, i_to_date):
+    """
+    :param str i_symbol: coin name
+    :param date 'YYYYMMDD' i_from_date: pull data from this date [includes]
+    :param date 'YYYYMMDD' i_to_date: pull data till this date [includes]
+    return list: coin history data
+    """
+
+    print(i_symbol)
+
+    data = {
+     'Date': [],
+     'Open': [],
+     'High': [],
+     'Low': [],
+     'Close': [],
+     'Volume': [],
+     'Market Cap': []
+    }
+
+    if i_symbol == 'CENNZ':
+        data['Date'].append(None)
+        data['Open'].append(None)
+        data['High'].append(None)
+        data['Low'].append(None)
+        data['Close'].append(None)
+        data['Volume'].append(None)
+        data['Market Cap'].append(None)
+        coin_data = pd.DataFrame(data)
+        return coin_data
+
+    # last day == yesterday
+    d=h.histo_day(i_symbol,'usd',limit=1)[-1]
+
+    # show the date of the history (not the start of the next day
+    # ie in cryptocompare the OHLCV values for Wednesday, December 4
+    # have timestamp Wednesday, December 5, 2018 12:00:00 AM
+    cor_date=datetime.fromtimestamp(d['time'])-timedelta(1)
+
+    data['Date'].append(cor_date)
+    data['Open'].append(d['open'])
+    data['High'].append(d['high'])
+    data['Low'].append(d['low'])
+    data['Close'].append(d['close'])
+    data['Volume'].append(d['volumeto'])
+    data['Market Cap'].append(None)
+    coin_data = pd.DataFrame(data)
+
     return coin_data
 
 

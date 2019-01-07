@@ -12,7 +12,7 @@ def select_coin_da_by_date(coin, sel_date = datetime.date.today()):
     from_date = datetime.datetime(sel_date.year, sel_date.month, sel_date.day)
     until_date = sel_date - datetime.timedelta(10)
 
-    cursor.execute('SELECT TOP 2 Symbol, forks, stars, subscribers, total_issues, closed_issues, pull_requests_merged, pull_request_contributors, commit_count_4_weeks, last_updated FROM FtaDeveloper WHERE Symbol = ? AND last_updated >= ? AND last_updated < ? ORDER BY last_updated desc', coin, until_date, from_date)
+    cursor.execute('SELECT TOP 2 Symbol, forks, stars, subscribers, total_issues, closed_issues, pull_requests_merged, pull_request_contributors, commit_count_4_weeks, last_updated FROM FtaGit WHERE Symbol = ? AND last_updated >= ? AND last_updated < ? ORDER BY last_updated desc', coin, until_date, from_date)
     R = cursor.fetchall()
 
     if len(R) != 2:
@@ -46,7 +46,7 @@ def select_da_by_date(sel_date):
     sel_date = datetime.datetime(sel_date.year, sel_date.month, sel_date.day)
     prev_sel_date = sel_date - datetime.timedelta(1)
 
-    cursor.execute('select Symbol, forks, stars, subscribers, total_issues, closed_issues, pull_requests_merged, pull_request_contributors, commit_count_4_weeks, last_updated from FtaDeveloper where last_updated >= ? AND last_updated < ?', prev_sel_date, sel_date)
+    cursor.execute('select Symbol, forks, stars, subscribers, total_issues, closed_issues, pull_requests_merged, pull_request_contributors, commit_count_4_weeks, last_updated from FtaGit where last_updated >= ? AND last_updated < ?', prev_sel_date, sel_date)
     R = cursor.fetchall()
     d = {}
     for r in R:

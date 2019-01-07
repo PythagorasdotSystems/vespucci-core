@@ -95,6 +95,8 @@ def coinGecko_developer_update(cg, cm_assets, cg_list):
                 continue
             if coin['symbol'].lower() == 'pax' and coin['id'].lower() != 'paxos-standard':
                 continue
+            if coin['symbol'].lower() == 'fun' and coin['id'].lower() != 'funfair':
+                continue
 
             if coin['symbol'] in coin_seen:
                 print('---Dupicates (same symbol)---')
@@ -145,7 +147,7 @@ def db_developer(coin_features):
 
         Values = []
 
-        db_query = 'INSERT INTO FtaDeveloper ('
+        db_query = 'INSERT INTO FtaGit ('
 
         db_query += ' Symbol'
         Values.append(coin['symbol'])
@@ -165,8 +167,14 @@ def db_developer(coin_features):
 
         #print(db_query)
         #print(Values)
-        db.cnxn.execute(db_query, tuple(Values))
-        db.cnxn.commit()
+        try:
+            db.cnxn.execute(db_query, tuple(Values))
+            db.cnxn.commit()
+        except:
+            coin['symbol']
+            print(db_query)
+            print(Values)
+            raise
 
     db.disconnect()
 
@@ -208,8 +216,14 @@ def db_cryptocompare(coin_features):
 
         #print(db_query)
         #print(Values)
-        db.cnxn.execute(db_query, tuple(Values))
-        db.cnxn.commit()
+        try:
+            db.cnxn.execute(db_query, tuple(Values))
+            db.cnxn.commit()
+        except:
+            print(coin)
+            print(db_query)
+            print(Values)
+            raise
 
 
 def db_coinmetrics(coin_features):
@@ -221,6 +235,8 @@ def db_coinmetrics(coin_features):
     for coin in coin_features:
         r[coin] = {}
         for feat in coin_features[coin]:
+            # TODO change that to: if feat in db
+            if feat=='reward' or feat=='realizedcap(usd)': continue
             for feat_ts in coin_features[coin][feat]:
                 if feat_ts[0] not in r[coin].keys():
                     r[coin][feat_ts[0]] = {}
@@ -251,8 +267,14 @@ def db_coinmetrics(coin_features):
 
             #print(db_query)
             #print(Values)
-            db.cnxn.execute(db_query, tuple(Values))
-            db.cnxn.commit()
+            try:
+                db.cnxn.execute(db_query, tuple(Values))
+                db.cnxn.commit()
+            except:
+                print(coin, ts)
+                print(db_query)
+                print(tuple(Values))
+                raise
 
     db.disconnect()
 
@@ -260,7 +282,7 @@ def db_coinmetrics(coin_features):
 
 
 def coinGeckoHistoricalDeveloper(coin_list, from_date, until_date = datetime.date.today().strftime('%d-%m-%Y')):
-    cg = CoinGeckoAPI()
+    cg = pycoingecko.CoinGeckoAPI()
 
     date = datetime.datetime.strptime(from_date, '%d-%m-%Y').date()
     until_date = datetime.datetime.strptime(until_date, '%d-%m-%Y').date()

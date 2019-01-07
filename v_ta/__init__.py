@@ -1,1 +1,1 @@
-from .ta_features import daily_update
+from .ta_features import daily_update, get_specific_coin_historical_data_coinmarketcap, get_specific_coin_historical_data_cryptocompare
