@@ -81,8 +81,8 @@ class DB:
 
 # Vespucci
 #----------------------------------------------------
-def vespucci_coin_list():
-    config = ConfigFileParser('../config.yml')
+def vespucci_coin_list(config=None):
+    if not config: config = ConfigFileParser('../config.yml')
     db = DB(config.database)
     db.connect()
     cursor = db.cnxn.cursor()

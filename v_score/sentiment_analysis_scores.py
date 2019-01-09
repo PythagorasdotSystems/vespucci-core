@@ -4,9 +4,9 @@ import datetime
 import time
 
 # Sentiment Analysis features
-def sa_features(sel_date = datetime.date.today()):
+def sa_features(sel_date = datetime.date.today(), config = None):
 
-    config = utils.tools.ConfigFileParser('../config.yml')
+    if not config: config = utils.tools.ConfigFileParser('../config.yml')
     db=utils.DB(config.database)
     db.connect()
     cursor = db.cnxn.cursor()   
@@ -84,8 +84,8 @@ def sa_scoring_function(sa_feats):
     return score
 
 
-def sa_scores(sel_date = datetime.date.today()):
-    feats = sa_features(sel_date)
+def sa_scores(sel_date = datetime.date.today(), config = None):
+    feats = sa_features(sel_date, config)
     scores = sa_scoring_function(feats)
     return scores, feats
 

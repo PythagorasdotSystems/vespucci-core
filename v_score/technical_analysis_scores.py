@@ -7,9 +7,9 @@ import utils
 import datetime
 
 
-def select_coin_ta_by_date(coin, sel_date = datetime.date.today()):
+def select_coin_ta_by_date(coin, sel_date = datetime.date.today(), config = None):
     #Connect to Database
-    config = utils.tools.ConfigFileParser('../config.yml')
+    if not config: config = utils.tools.ConfigFileParser('../config.yml')
     db=utils.DB(config.database)
     db.connect()
     cursor = db.cnxn.cursor()
@@ -56,20 +56,20 @@ def select_coin_ta_by_date(coin, sel_date = datetime.date.today()):
     return t0
 
 
-def ta_features(sel_date = datetime.date.today(), coin_list = None):
+def ta_features(sel_date = datetime.date.today(), coin_list = None, config = None):
     #Connect to Database
-    config = utils.tools.ConfigFileParser('../config.yml')
+    if not config: config = utils.tools.ConfigFileParser('../config.yml')
     db=utils.DB(config.database)
     db.connect()
     cursor = db.cnxn.cursor()
 
     if not coin_list:
-        coin_list = utils.tools.vespucci_coin_list()
+        coin_list = utils.tools.vespucci_coin_list(config)
         coin_list =[coin['Symbol'].lower() for coin in coin_list]
 
     t0={}
     for coin in coin_list:
-        R=select_coin_ta_by_date(coin, sel_date)
+        R=select_coin_ta_by_date(coin, sel_date, config)
         if R:
             t0.update(R)
 
@@ -159,8 +159,8 @@ def IndicatorsScore(df):
     return score.iloc[0], score2, df
 
 
-def ta_scores(sel_date = datetime.date.today(), coin_list = None):
-    feats = ta_features(sel_date, coin_list)
+def ta_scores(sel_date = datetime.date.today(), coin_list = None, config = None):
+    feats = ta_features(sel_date, coin_list, config)
     scores = ta_scoring_function(feats)
     return scores, feats
 
