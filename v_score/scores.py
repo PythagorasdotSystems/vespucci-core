@@ -32,12 +32,12 @@ def scoring_function(sel_date = datetime.date.today(), config = None):
     #for coin in bea_scores:
     #    print(coin + ', ' + str(bea_scores[coin]))
 
-    ## Expert Analysis
+    # Expert Analysis
 
-    #ea_scores, ea_feats = expert_analysis_scores.ea_scores()
+    ea_scores, ea_feats = expert_analysis_scores.ea_scores()
 
-    #total_analysis['ea_feats'] = ea_feats
-    #total_analysis['ea_scores'] = ea_scores
+    total_analysis['ea_feats'] = ea_feats
+    total_analysis['ea_scores'] = ea_scores
 
     #for coin in ea_scores:
     #    print(coin + ', ' + str(ea_scores[coin]))
@@ -103,8 +103,11 @@ def scoring_function(sel_date = datetime.date.today(), config = None):
         if coin not in ta_scores.keys():
             print(coin.upper(), ' not in TA!!')
             ta_scores[coin] = 0
+        if coin not in ea_scores.keys():
+            ea_scores[coin] = 1
+            print(coin.upper(), ' not in EA!!')
 
-        total_scores['fta'][coin] = 0.7 * bea_scores[coin] + 0.3 * da_scores[coin]
+        total_scores['fta'][coin] = 0.65 * bea_scores[coin] + 0.25 * da_scores[coin] + 0.1 * ea_scores[coin]
         total_scores['ta'][coin] = 1 * ta_scores[coin]
         total_scores['sa'][coin] = 1 * sa_scores[coin]
 
