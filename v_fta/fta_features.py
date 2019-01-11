@@ -4,7 +4,6 @@ import coinmetrics
 from .fta_coin import social_features
 from .fta_coin import block_features
 
-from db import DB
 import utils
 
 import logging
