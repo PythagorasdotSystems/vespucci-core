@@ -2,6 +2,8 @@ import logging
 import pyodbc
 import yaml
 
+__global_vars={}
+
 # Logger
 #----------------------------------------------------
 def logger_default(logger_name, logger_fname):
@@ -58,6 +60,13 @@ class ConfigFileParser:
         #TODO add checks
         self.__twitter = value
 
+
+def set_config(config_file):
+    __global_vars['config']=ConfigFileParser(config_file)
+
+
+def get_config():
+    return __global_vars['config']
 
 
 # Database

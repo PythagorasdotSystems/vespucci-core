@@ -12,6 +12,8 @@ from . import block_explorer_analysis_scores
 # Scoring Function to combine all scores
 def scoring_function(sel_date = datetime.date.today(), config = None):
 
+    if not config: config = utils.tools.get_config()
+
     # Vespucci coin list
     coin_list = utils.tools.vespucci_coin_list(config)
     coin_list =[coin['Symbol'].lower() for coin in coin_list]
@@ -118,8 +120,9 @@ def scoring_function(sel_date = datetime.date.today(), config = None):
     return total_scores, total_analysis
 
 
-def update_scores_db(scores):
-    config = utils.tools.ConfigFileParser('../config.yml')
+def update_scores_db(scores, config=None):
+    #config = utils.tools.ConfigFileParser('../config.yml')
+    if not config: config = utils.tools.get_config()
     db=utils.DB(config.database)
     db.connect()
     cursor = db.cnxn.cursor()
@@ -136,7 +139,7 @@ def update_scores_db(scores):
         cursor.commit()
 
 
-def update():
+def update(config=None):
 
     logger = utils.logger_default('scoring_function', '../../scores.log')
 
@@ -145,7 +148,7 @@ def update():
     total_scores, total_analysis = scoring_function()
     if total_scores:
         logger.info('Insert new scores in DB')
-        update_scores_db(total_scores)
+        update_scores_db(total_scores, config)
 
 
 if __name__ == "__main__":

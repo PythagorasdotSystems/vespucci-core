@@ -48,7 +48,8 @@ def select_coin_bea_by_date(coin, sel_date = datetime.date.today(), config = Non
     from_date = datetime.datetime(sel_date.year, sel_date.month, sel_date.day)
     until_date = sel_date - datetime.timedelta(10)
 
-    if not config: config = utils.tools.ConfigFileParser('../config.yml')
+    #if not config: config = utils.tools.ConfigFileParser('../config.yml')
+    if not config: config = utils.tools.get_config()
     db=utils.DB(config.database)
     db.connect()
     cursor = db.cnxn.cursor()
@@ -99,7 +100,8 @@ def select_bea_by_date(sel_date, config = None):
     #print(sel_date)
     #print(prev_sel_date)
 
-    if not config: config = utils.tools.ConfigFileParser('../config.yml')
+    #if not config: config = utils.tools.ConfigFileParser('../config.yml')
+    if not config: config = utils.tools.get_config()
     db=utils.DB(config.database)
     db.connect()
     cursor = db.cnxn.cursor()

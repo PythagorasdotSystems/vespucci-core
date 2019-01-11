@@ -6,7 +6,8 @@ import time
 # Sentiment Analysis features
 def sa_features(sel_date = datetime.date.today(), config = None):
 
-    if not config: config = utils.tools.ConfigFileParser('../config.yml')
+    #if not config: config = utils.tools.ConfigFileParser('../config.yml')
+    if not config: config = utils.tools.get_config()
     db=utils.DB(config.database)
     db.connect()
     cursor = db.cnxn.cursor()   

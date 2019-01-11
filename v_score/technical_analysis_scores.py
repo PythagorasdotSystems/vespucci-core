@@ -9,7 +9,8 @@ import datetime
 
 def select_coin_ta_by_date(coin, sel_date = datetime.date.today(), config = None):
     #Connect to Database
-    if not config: config = utils.tools.ConfigFileParser('../config.yml')
+    #if not config: config = utils.tools.ConfigFileParser('../config.yml')
+    if not config: config = utils.tools.get_config()
     db=utils.DB(config.database)
     db.connect()
     cursor = db.cnxn.cursor()
@@ -58,7 +59,8 @@ def select_coin_ta_by_date(coin, sel_date = datetime.date.today(), config = None
 
 def ta_features(sel_date = datetime.date.today(), coin_list = None, config = None):
     #Connect to Database
-    if not config: config = utils.tools.ConfigFileParser('../config.yml')
+    #if not config: config = utils.tools.ConfigFileParser('../config.yml')
+    if not config: config = utils.tools.get_config()
     db=utils.DB(config.database)
     db.connect()
     cursor = db.cnxn.cursor()

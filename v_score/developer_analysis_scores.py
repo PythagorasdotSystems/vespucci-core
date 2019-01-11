@@ -4,7 +4,8 @@ import datetime
 
 def select_coin_da_by_date(coin, sel_date = datetime.date.today(), config = None ):
 
-    if not config: config = utils.tools.ConfigFileParser('../config.yml')
+    #if not config: config = utils.tools.ConfigFileParser('../config.yml')
+    if not config: config = utils.tools.get_config()
     db=utils.DB(config.database)
     db.connect()
     cursor = db.cnxn.cursor()
@@ -38,7 +39,8 @@ def select_coin_da_by_date(coin, sel_date = datetime.date.today(), config = None
 
 def select_da_by_date(sel_date, config = None):
 
-    if not config: config = utils.tools.ConfigFileParser('../config.yml')
+    #if not config: config = utils.tools.ConfigFileParser('../config.yml')
+    if not config: config = utils.tools.get_config()
     db=utils.DB(config.database)
     db.connect()
     cursor = db.cnxn.cursor()
