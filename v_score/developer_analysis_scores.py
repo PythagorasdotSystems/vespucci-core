@@ -2,9 +2,10 @@ import utils
 import datetime
 
 
-def select_coin_da_by_date(coin, sel_date = datetime.date.today()):
+def select_coin_da_by_date(coin, sel_date = datetime.date.today(), config = None ):
 
-    config = utils.tools.ConfigFileParser('../config.yml')
+    #if not config: config = utils.tools.ConfigFileParser('../config.yml')
+    if not config: config = utils.tools.get_config()
     db=utils.DB(config.database)
     db.connect()
     cursor = db.cnxn.cursor()
@@ -36,9 +37,10 @@ def select_coin_da_by_date(coin, sel_date = datetime.date.today()):
     return T[::-1]
 
 
-def select_da_by_date(sel_date):
+def select_da_by_date(sel_date, config = None):
 
-    config = utils.tools.ConfigFileParser('../config.yml')
+    #if not config: config = utils.tools.ConfigFileParser('../config.yml')
+    if not config: config = utils.tools.get_config()
     db=utils.DB(config.database)
     db.connect()
     cursor = db.cnxn.cursor()
@@ -103,7 +105,7 @@ def compute_da_scores(t0, t1):
 
 
 # Developer Analysis features
-def da_features(sel_date = datetime.date.today(), coin_list = None):
+def da_features(sel_date = datetime.date.today(), coin_list = None, config = None):
     if coin_list and  not isinstance(coin_list, (list,)):
         raise TypeError('coin_list must list')
 
@@ -112,13 +114,13 @@ def da_features(sel_date = datetime.date.today(), coin_list = None):
     #t1 = select_da_by_date(sel_date)
 
     if not coin_list:
-        coin_list = utils.tools.vespucci_coin_list()
+        coin_list = utils.tools.vespucci_coin_list(config)
         coin_list =[coin['Symbol'].lower() for coin in coin_list]
 
     t0 = {}
     t1 = {}
     for coin in coin_list:
-        R = select_coin_da_by_date(coin, sel_date)
+        R = select_coin_da_by_date(coin, sel_date, config)
         if R:
             t0.update(R[0])
             t1.update(R[1])
@@ -151,8 +153,8 @@ def da_scoring_function(da_feats):
     return score
 
 
-def da_scores(sel_date = datetime.date.today(), coin_list = None):
-    feats = da_features(sel_date, coin_list)
+def da_scores(sel_date = datetime.date.today(), coin_list = None, config = None):
+    feats = da_features(sel_date, coin_list, config)
     scores = da_scoring_function(feats)
     return scores, feats
 

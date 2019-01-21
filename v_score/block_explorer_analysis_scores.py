@@ -44,11 +44,12 @@ def divide_dict_by_max(d, feat_name):
 #    return [i for i,x in enumerate([d[0] for d in description]) if x == feature_name][0]
 
 
-def select_coin_bea_by_date(coin, sel_date = datetime.date.today()):
+def select_coin_bea_by_date(coin, sel_date = datetime.date.today(), config = None):
     from_date = datetime.datetime(sel_date.year, sel_date.month, sel_date.day)
     until_date = sel_date - datetime.timedelta(10)
 
-    config = utils.tools.ConfigFileParser('../config.yml')
+    #if not config: config = utils.tools.ConfigFileParser('../config.yml')
+    if not config: config = utils.tools.get_config()
     db=utils.DB(config.database)
     db.connect()
     cursor = db.cnxn.cursor()
@@ -93,13 +94,14 @@ def select_coin_bea_by_date(coin, sel_date = datetime.date.today()):
     #return T[0], T[1]
     return T
 
-def select_bea_by_date(sel_date):
+def select_bea_by_date(sel_date, config = None):
     sel_date = datetime.datetime(sel_date.year, sel_date.month, sel_date.day)
     prev_sel_date = sel_date - datetime.timedelta(1)
     #print(sel_date)
     #print(prev_sel_date)
 
-    config = utils.tools.ConfigFileParser('../config.yml')
+    #if not config: config = utils.tools.ConfigFileParser('../config.yml')
+    if not config: config = utils.tools.get_config()
     db=utils.DB(config.database)
     db.connect()
     cursor = db.cnxn.cursor()
@@ -129,20 +131,20 @@ def select_bea_by_date(sel_date):
     return d
 
 # Block Explorer Analysis features
-def bea_features(sel_date = datetime.date.today(), coin_list = None):
+def bea_features(sel_date = datetime.date.today(), coin_list = None, config = None):
 
     #prev_sel_date = sel_date - datetime.timedelta(1)
     #t0 = select_bea_by_date(prev_sel_date)
     #t1 = select_bea_by_date(sel_date)
 
     if not coin_list:
-        coin_list = utils.tools.vespucci_coin_list()
+        coin_list = utils.tools.vespucci_coin_list(config)
         coin_list =[coin['Symbol'].lower() for coin in coin_list]
 
     t0 = {}
     t1 = {}
     for coin in coin_list:
-        R = select_coin_bea_by_date(coin, sel_date)
+        R = select_coin_bea_by_date(coin, sel_date, config)
         if len(R) == 1:
             t1.update(R[0])
         elif len(R) == 2:
@@ -216,8 +218,8 @@ def bea_scoring_function(block_feats):
     return score
 
 
-def bea_scores(sel_date = datetime.date.today(), coin_list = None):
-    feats = bea_features(sel_date, coin_list)
+def bea_scores(sel_date = datetime.date.today(), coin_list = None, config = None):
+    feats = bea_features(sel_date, coin_list, config)
     scores = bea_scoring_function(feats)
     return scores, feats
 

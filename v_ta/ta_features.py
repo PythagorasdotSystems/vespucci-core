@@ -15,9 +15,10 @@ import utils
 from crycompare import history as h
 
 
-def update_ta_db(df):
+def update_ta_db(df, config=None):
     #Database Connection
-    config = utils.tools.ConfigFileParser('../config.yml')
+    #config = utils.tools.ConfigFileParser('../config.yml')
+    if not config: config = utils.tools.get_config()
     db=utils.DB(config.database)
     db.connect()
     cursor = db.cnxn.cursor()
@@ -42,7 +43,7 @@ def update_ta_db(df):
     db.disconnect()
     #print(df)
 
-def ta_features(i_from_date=None, i_to_date=None,i_coin_markets=[]):
+def ta_features(i_from_date=None, i_to_date=None,i_coin_markets=[],config=None):
     """
     :param str 'YYYY-MM-DD' i_from_date: pull data from this date [includes]
     :param str 'YYYY-MM-DD' i_to_date: pull data till this date [includes]
@@ -51,7 +52,8 @@ def ta_features(i_from_date=None, i_to_date=None,i_coin_markets=[]):
     counter = 1
     from_date, to_date = get_from_to_dates(i_from_date, i_to_date)
     df_coins = pd.DataFrame([])
-    coins_dict = get_coins_from_database()
+    if not config: config = utils.tools.get_config()
+    coins_dict = get_coins_from_database(config)
 
     iterations = math.ceil(len(coins_dict.items())/25)
     for j in range(iterations):
@@ -72,12 +74,13 @@ def ta_features(i_from_date=None, i_to_date=None,i_coin_markets=[]):
     return df_coins2
 
 
-def get_coins_from_database():
+def get_coins_from_database(config=None):
     """
     :return dict: rank, coin name
     """
     #Database Connection
-    config = utils.tools.ConfigFileParser('../config.yml')
+    #config = utils.tools.ConfigFileParser('../config.yml')
+    if not config: config = utils.tools.get_config()
     db=utils.DB(config.database)
     db.connect()
     cursor = db.cnxn.cursor()
@@ -291,11 +294,11 @@ def waitToTomorrow():
     time.sleep(delta.seconds)
 
 #ta_features('2018-11-10','2018-11-17')
-def daily_update():
+def daily_update(config=None):
     yesterday = date.today() - timedelta(1)
     str_yesterday = yesterday.strftime('%Y-%m-%d')
-    df_coins = ta_features(str_yesterday)
-    update_ta_db(df_coins);
+    df_coins = ta_features(str_yesterday,config=config)
+    update_ta_db(df_coins, config);
 
 
 if __name__ == "__main__":

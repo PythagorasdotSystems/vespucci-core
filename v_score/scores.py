@@ -10,10 +10,12 @@ from . import expert_analysis_scores
 from . import block_explorer_analysis_scores
 
 # Scoring Function to combine all scores
-def scoring_function(sel_date = datetime.date.today()):
+def scoring_function(sel_date = datetime.date.today(), config = None):
+
+    if not config: config = utils.tools.get_config()
 
     # Vespucci coin list
-    coin_list = utils.tools.vespucci_coin_list()
+    coin_list = utils.tools.vespucci_coin_list(config)
     coin_list =[coin['Symbol'].lower() for coin in coin_list]
 
 
@@ -21,7 +23,7 @@ def scoring_function(sel_date = datetime.date.today()):
 
     # Block Explorer Analysis
 
-    bea_scores, bea_feats = block_explorer_analysis_scores.bea_scores(sel_date)
+    bea_scores, bea_feats = block_explorer_analysis_scores.bea_scores(sel_date=sel_date, config=config)
     # change keys to lowercase
     bea_scores = {(k.lower()).strip(): v for k, v in bea_scores.items()}
     bea_feats = {(k.lower)().strip(): v for k, v in bea_feats.items()}
@@ -32,19 +34,19 @@ def scoring_function(sel_date = datetime.date.today()):
     #for coin in bea_scores:
     #    print(coin + ', ' + str(bea_scores[coin]))
 
-    ## Expert Analysis
+    # Expert Analysis
 
-    #ea_scores, ea_feats = expert_analysis_scores.ea_scores()
+    ea_scores, ea_feats = expert_analysis_scores.ea_scores()
 
-    #total_analysis['ea_feats'] = ea_feats
-    #total_analysis['ea_scores'] = ea_scores
+    total_analysis['ea_feats'] = ea_feats
+    total_analysis['ea_scores'] = ea_scores
 
     #for coin in ea_scores:
     #    print(coin + ', ' + str(ea_scores[coin]))
 
     # Sentiment Analysis
 
-    sa_scores, sa_feats = sentiment_analysis_scores.sa_scores(sel_date)
+    sa_scores, sa_feats = sentiment_analysis_scores.sa_scores(sel_date=sel_date, config=config)
     # change keys to lowercase
     sa_scores = {(k.lower()).strip(): v for k, v in sa_scores.items()}
     sa_feats = {(k.lower)().strip(): v for k, v in sa_feats.items()}
@@ -57,7 +59,7 @@ def scoring_function(sel_date = datetime.date.today()):
 
     # Developer Analysis
 
-    da_scores, da_feats = developer_analysis_scores.da_scores(sel_date)
+    da_scores, da_feats = developer_analysis_scores.da_scores(sel_date, config=config)
     # change keys to lowercase
     da_scores = {(k.lower()).strip(): v for k, v in da_scores.items()}
     da_feats = {(k.lower)().strip(): v for k, v in da_feats.items()}
@@ -67,7 +69,7 @@ def scoring_function(sel_date = datetime.date.today()):
 
     # Technical Analysis
 
-    ta_scores, ta_feats = technical_analysis_scores.ta_scores(sel_date)
+    ta_scores, ta_feats = technical_analysis_scores.ta_scores(sel_date, config=config)
     # change keys to lowercase
     ta_scores = {(k.lower()).strip(): v for k, v in ta_scores.items()}
     ta_feats = {(k.lower)().strip(): v for k, v in ta_feats.items()}
@@ -103,8 +105,11 @@ def scoring_function(sel_date = datetime.date.today()):
         if coin not in ta_scores.keys():
             print(coin.upper(), ' not in TA!!')
             ta_scores[coin] = 0
+        if coin not in ea_scores.keys():
+            ea_scores[coin] = 1
+            print(coin.upper(), ' not in EA!!')
 
-        total_scores['fta'][coin] = 0.7 * bea_scores[coin] + 0.3 * da_scores[coin]
+        total_scores['fta'][coin] = 0.65 * bea_scores[coin] + 0.25 * da_scores[coin] + 0.1 * ea_scores[coin]
         total_scores['ta'][coin] = 1 * ta_scores[coin]
         total_scores['sa'][coin] = 1 * sa_scores[coin]
 
@@ -115,8 +120,9 @@ def scoring_function(sel_date = datetime.date.today()):
     return total_scores, total_analysis
 
 
-def update_scores_db(scores):
-    config = utils.tools.ConfigFileParser('../config.yml')
+def update_scores_db(scores, config=None):
+    #config = utils.tools.ConfigFileParser('../config.yml')
+    if not config: config = utils.tools.get_config()
     db=utils.DB(config.database)
     db.connect()
     cursor = db.cnxn.cursor()
@@ -133,7 +139,7 @@ def update_scores_db(scores):
         cursor.commit()
 
 
-def update():
+def update(config=None):
 
     logger = utils.logger_default('scoring_function', '../../scores.log')
 
@@ -142,7 +148,7 @@ def update():
     total_scores, total_analysis = scoring_function()
     if total_scores:
         logger.info('Insert new scores in DB')
-        update_scores_db(total_scores)
+        update_scores_db(total_scores, config)
 
 
 if __name__ == "__main__":

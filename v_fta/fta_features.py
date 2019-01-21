@@ -4,7 +4,6 @@ import coinmetrics
 from .fta_coin import social_features
 from .fta_coin import block_features
 
-from db import DB
 import utils
 
 import logging
@@ -134,9 +133,13 @@ def coinGecko_list_update(coin_list):
     return response
 
 
-def db_developer(coin_features):
-    db = DB()
+def db_developer(coin_features, config=None):
+
+    #if not config: config = utils.tools.ConfigFileParser('../config.yml')
+    if not config: config = utils.tools.get_config()
+    db=utils.DB(config.database)
     db.connect()
+    cursor = db.cnxn.cursor()
 
     #coin_features = coinGecko_list_update(coin_features)
     for coin in coin_features:
@@ -168,8 +171,8 @@ def db_developer(coin_features):
         #print(db_query)
         #print(Values)
         try:
-            db.cnxn.execute(db_query, tuple(Values))
-            db.cnxn.commit()
+            cursor.execute(db_query, tuple(Values))
+            cursor.commit()
         except:
             coin['symbol']
             print(db_query)
@@ -179,9 +182,13 @@ def db_developer(coin_features):
     db.disconnect()
 
 
-def db_cryptocompare(coin_features):
-    db = DB()
+def db_cryptocompare(coin_features, config=None):
+
+    #if not config: config = utils.tools.ConfigFileParser('../config.yml')
+    if not config: config = utils.tools.get_config()
+    db=utils.DB(config.database)
     db.connect()
+    cursor = db.cnxn.cursor()
 
     for coin in coin_features:
         #print(coin_features[coin])
@@ -217,18 +224,25 @@ def db_cryptocompare(coin_features):
         #print(db_query)
         #print(Values)
         try:
-            db.cnxn.execute(db_query, tuple(Values))
-            db.cnxn.commit()
+            cursor.execute(db_query, tuple(Values))
+            cursor.commit()
         except:
             print(coin)
             print(db_query)
             print(Values)
             raise
 
+    db.disconnect()
 
-def db_coinmetrics(coin_features):
-    db = DB()
+
+def db_coinmetrics(coin_features, config=None):
+
+    #if not config: config = utils.tools.ConfigFileParser('../config.yml')
+    if not config: config = utils.tools.get_config()
+    db=utils.DB(config.database)
     db.connect()
+    cursor = db.cnxn.cursor()
+
 
     r = {}
     # fix Dic to format Dic[coin][timestamp][feature] instead of Dic[coin][feature][[timestamp,feature_value],[timestamp2, feature_value]]
@@ -268,8 +282,8 @@ def db_coinmetrics(coin_features):
             #print(db_query)
             #print(Values)
             try:
-                db.cnxn.execute(db_query, tuple(Values))
-                db.cnxn.commit()
+                cursor.execute(db_query, tuple(Values))
+                cursor.commit()
             except:
                 print(coin, ts)
                 print(db_query)
