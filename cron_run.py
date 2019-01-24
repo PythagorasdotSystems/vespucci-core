@@ -20,6 +20,8 @@ for opt, arg in opts:
 # set config file
 utils.tools.set_config(configfile)
 
+config=utils.tools.get_config()
+
 # create logger
 logger = utils.logger_default('fta_&_scores_cron', '../fta_scores_cron.log')
 
