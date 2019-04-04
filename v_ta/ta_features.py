@@ -49,27 +49,20 @@ def ta_features(i_from_date=None, i_to_date=None,i_coin_markets=[],config=None):
     :param str 'YYYY-MM-DD' i_to_date: pull data till this date [includes]
     writes to a csv file - historic data of coins
     """
-    counter = 1
     from_date, to_date = get_from_to_dates(i_from_date, i_to_date)
     df_coins = pd.DataFrame([])
+
     if not config: config = utils.tools.get_config()
     coins_dict = get_coins_from_database(config)
 
-    iterations = math.ceil(len(coins_dict.items())/25)
-    for j in range(iterations):
-        start = j*25
-        end = (j+1)*25 -1
-        counter = 0
-        for id,coinNames in coins_dict.items():
-            if(counter >=start and counter <= end):
-                coin = coinNames[2]
-                name = coinNames[1]
-                symbol = coinNames[0]
-                #print(coin)
-                df_coins = df_coins.append(get_coins_historical_data(symbol,name,coin, from_date, to_date))
-            counter += 1
-        time.sleep(90)
+    for id,coinNames in coins_dict.items():
+        coin = coinNames[2]
+        name = coinNames[1]
+        symbol = coinNames[0]
+        #print(coin)
+        df_coins = df_coins.append(get_coins_historical_data(symbol,name,coin, from_date, to_date))
     df_coins2 = df_coins[::-1]
+
     #print(df_coins2)
     return df_coins2
 
@@ -120,10 +113,22 @@ def get_coins_historical_data(i_symbol, i_name, i_coin, i_from_date, i_to_date):
     :param date 'YYYYMMDD' i_to_date: pull data till this date [includes]
     return list: coin history data includes current ranking
     """
-    df_coin = get_specific_coin_historical_data_coinmarketcap(i_coin, i_from_date, i_to_date)
-    #df_coin = get_specific_coin_historical_data_cryptocompare(i_symbol, i_from_date, i_to_date)
-    #if(df_coin):
-    #print(len(df_coin))
+    max_retries=5
+    sleep_sec=24
+    for retry in range(max_retries + 1):
+        df_coin = get_specific_coin_historical_data_coinmarketcap(i_coin, i_from_date, i_to_date)
+        #df_coin = get_specific_coin_historical_data_cryptocompare(i_symbol, i_from_date, i_to_date)
+        if df_coin.shape[0]:
+            #print(df_coin.head())
+            break
+        else:
+            print(i_symbol + ' historical data (OHLCV) are empty.')
+            if retry<max_retries:
+                print('Sleep for ' + str((retry+1) * sleep_sec) + 'sec and retry (' + str(retry+1) + '/' + str(max_retries) + ' retries)')
+                time.sleep((retry+1) * sleep_sec)
+            else: break
+    if not df_coin.shape[0]: raise ValueError(i_symbol + ' historical data (OHLCV) are empty!')
+
     df_coin['Id'] = i_coin
     df_coin['Name'] = i_name
     df_coin['Symbol'] = i_symbol
