@@ -3,6 +3,7 @@ import pyodbc
 import yaml
 
 __global_vars={}
+__global_vars['config']=None
 
 # Logger
 #----------------------------------------------------
@@ -91,7 +92,7 @@ class DB:
 # Vespucci
 #----------------------------------------------------
 def vespucci_coin_list(config=None):
-    if not config: config = ConfigFileParser('../config.yml')
+    if not config: config = get_config()
     db = DB(config.database)
     db.connect()
     cursor = db.cnxn.cursor()

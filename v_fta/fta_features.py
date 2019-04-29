@@ -43,6 +43,9 @@ def fta_features():
     cm_coins_features = cm.get_all_data_types_for_assets(['ven' if coin.lower() == 'vet' else coin.lower() for coin in coin_list if coin.lower() in cm_supported_assets])
     cm_coins_features['vet'] = cm_coins_features.pop('ven')
 
+    # check if all features from CoinMetrics are empty
+    if not sum( [int( any(v.values()) ) for v in cm_coins_features.values()] ):
+        raise ValueError('CoinMetrics features are empty!')
 
     # CryptoCompare API
     #coins_block_features = block_features(cm_supported_assets)
